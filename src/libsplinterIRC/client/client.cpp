@@ -28,6 +28,7 @@ void splinterClient::connect()
         critical_thread_failed = true;
         return;
     }
+
     for (struct addrinfo* rp = result; rp != nullptr; rp = rp->ai_next)
     {
         socket_ = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -42,12 +43,14 @@ void splinterClient::connect()
         close(socket_);
         socket_ = -1;
     }
+
     freeaddrinfo(result);
     if (socket_ == -1) {
         std::cerr << "Failed to connect to server" << std::endl;
         critical_thread_failed = true;
         return;
     }
+
     set_nick( nick_ );
     set_user( nick_ );
 }
@@ -630,11 +633,9 @@ void splinterClient::decision_loop(const IRCEvent& event)
             break;
 
         default:
-            std::cerr << "Received a type without a handler associated.  Report this message as a bug." << std::endl;
-            std::cerr << event.to_json() << std::endl;
+            handle_unassociated_event(event);
             break;
     }
-    std::cout << event.to_json();
 }
 
 void splinterClient::send( const std::string& message )

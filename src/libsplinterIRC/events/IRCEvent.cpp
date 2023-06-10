@@ -192,6 +192,9 @@ IRCEvent::IRCEvent(const std::string& raw_message, const std::string& server) : 
         if (type_ == Type::PING) {
             sender_ = server_;
         }
+
+
+
     }
 
     // the irc protocol is a trash fire and we have to do this

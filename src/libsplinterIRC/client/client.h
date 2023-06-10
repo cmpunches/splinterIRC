@@ -52,7 +52,7 @@ class splinterClient {
         void help_prompt( std::string reply_to, std::string& command );
         bool password_is_valid( const std::string& command );
         void handle_command( const IRCEvent& event );
-
+        void handle_unassociated_event( const IRCEvent& event );
         void handle_UNKNOWN( const IRCEvent& event );
         void handle_JOIN( const IRCEvent& event );
         void handle_PART( const IRCEvent& event );
@@ -196,6 +196,11 @@ class splinterClient {
         void handle_ERR_SASLABORTED( const IRCEvent& event );
         void handle_ERR_SASLALREADY( const IRCEvent& event );
         void handle_RPL_SASLMECHS( const IRCEvent& event );
+
+        void handle_ctcp_version(const IRCEvent& event);
+        void handle_ctcp_time( const IRCEvent& event );
+        void handle_ctcp_ping( const IRCEvent& event );
+        void handle_ctcp( const IRCEvent& event );
 
         void report_event( const IRCEvent& event );
 
