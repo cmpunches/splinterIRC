@@ -1,4 +1,4 @@
-#include "../client.h"
+#include "../client/client.h"
 
 bool splinterClient::password_is_valid( const std::string& command )
 {
@@ -53,7 +53,7 @@ void splinterClient::handle_command( const IRCEvent& event )
             std::thread([client]
                         {
                             client->connect();
-                            client->spawn_io_loop();
+                            client->run();
                         }).detach();
             // Store the new instance of IRCClient in the clients_ member variable using the next available ID
             clients_[std::to_string(next_id_++)] = client;

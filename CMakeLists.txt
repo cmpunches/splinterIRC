@@ -3,4 +3,4 @@ project(splinterIRC)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(splinter splinter.cpp src/libsplinterIRC/irc_event/irc_event.cpp src/libsplinterIRC/irc_event/irc_event.h src/libsplinterIRC/client/client.cpp src/libsplinterIRC/client/client.h src/libsplinterIRC/client/command_processing/command_processing.cpp src/libsplinterIRC/client/handlers/handlers.cpp)
+add_executable(splinter splinter.cpp src/libsplinterIRC/events/IRCEvent.cpp src/libsplinterIRC/events/IRCEvent.h src/libsplinterIRC/client/client.cpp src/libsplinterIRC/client/client.h src/libsplinterIRC/command_processing/command_processing.cpp src/libsplinterIRC/handlers/handlers.cpp src/libsplinterIRC/threads/client_threads.cpp)

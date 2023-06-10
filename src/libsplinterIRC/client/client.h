@@ -14,7 +14,7 @@
 #include <sstream>
 #include <map>
 #include <atomic>
-#include "../irc_event/irc_event.h"
+#include "../events/IRCEvent.h"
 
 // the client that will be controlled by commands via PM on the control server
 class splinterClient {
@@ -25,17 +25,17 @@ class splinterClient {
         void connect();
         void join_channel( std::string channel );
 
-        void spawn_io_loop();
+        void run();
 
     private:
         void send(const std::string& message);
 
-        void ingestion_loop();
-        void orientation_loop( const IRCEvent& event );
+        void observation_loop();
+        void decision_loop(const IRCEvent& event );
         void processing_loop();
 
         // EVENT HANDLERS
-        // These are tied to the orientation_loop() function.
+        // These are tied to the decision_loop() function.
         // They are called when an event is received if mapped to that event type.
         void handle_ping(const IRCEvent& event);
         void handle_channel_message(const IRCEvent& event);
@@ -65,7 +65,6 @@ class splinterClient {
         void handle_rpl_created( const IRCEvent& event );
         void handle_rpl_myinfo( const IRCEvent& event );
         void handle_rpl_isupport( const IRCEvent& event );
-
 
         std::string server_;
         std::string port_;

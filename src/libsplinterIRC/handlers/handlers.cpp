@@ -1,4 +1,6 @@
-#include "../client.h"
+#include "../client/client.h"
+
+// decision/action
 
 void splinterClient::handle_ping(const IRCEvent &event)
 {

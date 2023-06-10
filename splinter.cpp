@@ -9,8 +9,6 @@ int main()
 
     // connect master splinter to the control server
     splinterClient master( master_server, master_port, master_nick, master_password );
-    master.connect();
-    master.spawn_io_loop();
 
     return 0;
 }

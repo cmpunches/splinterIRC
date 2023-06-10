@@ -1,5 +1,7 @@
-#ifndef SPLINTERIRC_IRC_EVENT_H
-#define SPLINTERIRC_IRC_EVENT_H
+#ifndef SPLINTERIRC_IRCEVENT_H
+#define SPLINTERIRC_IRCEVENT_H
+
+// orientation
 
 #include <string>
 #include <sstream>
@@ -191,4 +193,4 @@ class IRCEvent {
         std::string server_;
 };
 
-#endif //SPLINTERIRC_IRC_EVENT_H
+#endif //SPLINTERIRC_IRCEVENT_H
