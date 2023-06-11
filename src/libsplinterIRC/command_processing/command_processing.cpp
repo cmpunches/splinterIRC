@@ -32,7 +32,7 @@ void splinterClient::handle_command( const IRCEvent& event )
         return;
     }
 
-    if (command.find("create") == 0)
+    if (command.find("splinter") == 0)
     {
         // Parse the command arguments
         std::istringstream ss(command);
@@ -61,7 +61,7 @@ void splinterClient::handle_command( const IRCEvent& event )
             send_private_message( event.nick(), "New splinter client registered in spanning tree index." );
 
         } else {
-            send_private_message( event.nick(), "Usage: !create <server> <port> <nick> <password>" );
+            send_private_message( event.nick(), "Usage: !splinter <server> <port> <nick> <password>" );
         }
     }
 
@@ -145,7 +145,7 @@ void splinterClient::handle_command( const IRCEvent& event )
 
 void splinterClient::help_prompt( std::string reply_to, std::string& command )
 {
-    send_private_message( reply_to, "Commands: !help, !quit, !create, !list, !destroy !join !say" );
+    send_private_message( reply_to, "Commands: !help, !quit, !splinter, !list, !destroy !join !say" );
 }
 
 void splinterClient::list_clients( const std::string& reply_to )
