@@ -47,3 +47,4 @@ See 'src/libsplinterIRC/handlers/handlers.cpp'.  You are able to have splinter r
 - Centralized indexing of children. 
 - More refined/nuanced event parsing
 - More client actions.  While all events in the RFC protocol are currently handled, not all client actions of the IRC protocol are implemented.  Future versions will be able to perform any client action in the RFC protocol with orchestration through the command processing subsystem.
+- SASL and SSL support
