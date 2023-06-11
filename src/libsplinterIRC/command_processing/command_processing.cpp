@@ -57,6 +57,9 @@ void splinterClient::handle_command( const IRCEvent& event )
 
             // Store the new instance of IRCClient in the clients_ member variable using the next available ID
             clients_[std::to_string(next_id_++)] = client;
+
+            send_private_message( event.nick(), "New splinter client registered in spanning tree index." );
+
         } else {
             send_private_message( event.nick(), "Usage: !create <server> <port> <nick> <password>" );
         }
