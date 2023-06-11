@@ -20,7 +20,7 @@ Quits the current client.
 
 ## !splinter 
 
-Creates a new client on a new set of detached threads.  This allows you to connect to either other servers or the same server, and should allow for seamless identity shifting across an infinite number of networks if orchestrated correctly with sufficient preparation as children survive the parents and are not bound to the same network.
+Creates a new client on a new set of detached threads.  This allows you to connect to either other servers or the same server, and should allow for seamless identity shifting across a number of networks if orchestrated correctly with sufficient preparation as children survive the parents and are not bound to the same network.
 
 ## !list
 
