@@ -84,22 +84,22 @@ void splinterClient::handle_S_PRIVATE_MESSAGE(const IRCEvent &event)
 
 void splinterClient::handle_JOIN( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_PART( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_KICK( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_NOTICE( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_PING( const IRCEvent& event )
@@ -117,82 +117,82 @@ void splinterClient::handle_QUIT( const IRCEvent& event )
 
 void splinterClient::handle_NICK( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_TOPIC( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_INVITE( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_ERROR( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_WELCOME( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_YOURHOST( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_CREATED( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_MYINFO( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_ISUPPORT( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_BOUNCE( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_STATSCOMMANDS( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_ENDOFSTATS( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_STATSUPTIME( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_UMODEIS( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_LUSERCLIENT( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_LUSEROP( const IRCEvent& event )
 {
-    this->report_event(event);
+    report_event(event);
 }
 
 void splinterClient::handle_RPL_LUSERUNKNOWN( const IRCEvent& event )
