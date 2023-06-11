@@ -1,15 +1,5 @@
 #include "../client/client.h"
 
-bool splinterClient::password_is_valid( const std::string& command )
-{
-    std::istringstream ss(command);
-    std::string token;
-    while (ss >> token);
-    bool result = (token == password_);
-
-    return result;
-}
-
 void splinterClient::handle_command( const IRCEvent& event )
 {
     std::string message = event.message();
@@ -53,7 +43,7 @@ void splinterClient::handle_command( const IRCEvent& event )
             std::thread([client]
                         {
                             client->connect();
-                            client->run();
+                            client->run_event_loop();
                         }).detach();
             // Store the new instance of IRCClient in the clients_ member variable using the next available ID
             clients_[std::to_string(next_id_++)] = client;
@@ -168,7 +158,9 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
     {
         // Send a QUIT command to the client
         it->second->send("QUIT :Bye!\r\n");
+        it->second->critical_thread_failed = true;
         send_private_message( reply_to, "Client with id '" + id + "' disconnected." );
+
         // Remove the client from the clients_ member variable
         clients_.erase(it);
         send_private_message( reply_to, "Client with id '" + id + "' removed.");

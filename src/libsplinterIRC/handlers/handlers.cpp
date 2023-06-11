@@ -1,10 +1,35 @@
 #include "../client/client.h"
 
-// decision/action
+//handlers
 void splinterClient::handle_unassociated_event( const IRCEvent& event )
 {
     std::cerr << "Received a type without a handler associated.  Report this message as a bug." << std::endl;
     std::cerr << event.to_json() << std::endl;
+}
+
+void splinterClient::handle_UNKNOWN( const IRCEvent& event )
+{
+    std::cerr << "Unknown message type: ";
+    std::cerr << event.to_json() << std::endl;
+}
+
+void splinterClient::report_event( const IRCEvent& event )
+{
+    std::cout << event.to_json();
+}
+
+void splinterClient::handle_S_CHANNEL_MESSAGE(const IRCEvent& event)
+{
+    report_event(event);
+    handle_ctcp( event );
+    handle_command( event );
+}
+
+void splinterClient::handle_S_PRIVATE_MESSAGE(const IRCEvent &event)
+{
+    report_event(event);
+    handle_ctcp( event );
+    handle_command( event );
 }
 
 void splinterClient::handle_ctcp_version(const IRCEvent& event)
@@ -55,31 +80,6 @@ void splinterClient::handle_ctcp( const IRCEvent& event )
             }
         }
     }
-}
-
-void splinterClient::handle_UNKNOWN( const IRCEvent& event )
-{
-    std::cerr << "Unknown message type: ";
-    std::cerr << event.to_json() << std::endl;
-}
-
-void splinterClient::report_event( const IRCEvent& event )
-{
-    std::cout << event.to_json();
-}
-
-void splinterClient::handle_S_CHANNEL_MESSAGE(const IRCEvent& event)
-{
-    report_event(event);
-    handle_ctcp( event );
-    handle_command( event );
-}
-
-void splinterClient::handle_S_PRIVATE_MESSAGE(const IRCEvent &event)
-{
-    report_event(event);
-    handle_ctcp( event );
-    handle_command( event );
 }
 
 void splinterClient::handle_JOIN( const IRCEvent& event )
@@ -198,7 +198,6 @@ void splinterClient::handle_RPL_LUSEROP( const IRCEvent& event )
 void splinterClient::handle_RPL_LUSERUNKNOWN( const IRCEvent& event )
 {
     report_event(event);
-
 }
 
 void splinterClient::handle_RPL_LUSERCHANNELS( const IRCEvent& event )

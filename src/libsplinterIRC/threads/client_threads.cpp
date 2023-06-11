@@ -66,10 +66,10 @@ void splinterClient::processing_loop()
     }
 }
 
-void splinterClient::run()
+void splinterClient::run_event_loop()
 {
-    std::thread ingestion_thread(&splinterClient::observation_loop, this);
+    std::thread observation_thread(&splinterClient::observation_loop, this);
     std::thread processing_thread(&splinterClient::processing_loop, this);
-    ingestion_thread.join();
+    observation_thread.join();
     processing_thread.join();
 }

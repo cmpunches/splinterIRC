@@ -14,6 +14,7 @@ void splinterClient::send_private_message( std::string nick, std::string message
 void splinterClient::set_nick( std::string nick )
 {
     send("NICK " + nick + "\r\n");
+    nick_ = nick;
 }
 
 void splinterClient::set_user( std::string user )

@@ -177,7 +177,9 @@ class IRCEvent {
         const std::string& message() const;
 
         // type mappings for string representation of types
-        std::string type_to_string(Type type) const;
+        std::string type_to_verb(Type type) const;
+        Type verb_to_type( const std::string& token ) const;
+
         std::string to_json() const;
 
     private:

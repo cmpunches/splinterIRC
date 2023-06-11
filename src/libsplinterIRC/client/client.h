@@ -23,22 +23,26 @@ class splinterClient {
         splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password );
         ~splinterClient();
 
-        void connect();
-
         // actions
         void join_channel( std::string channel );
         void set_nick( std::string nick );
         void send_private_message( std::string nick, std::string message );
         void set_user( std::string user );
 
+        const std::string& get_nick() const;
+        const std::string& get_server() const;
+
         // main loop
-        void run();
+        void run_event_loop();
 
     private:
+        void connect();
+
         void send(const std::string& message);
 
         void observation_loop();
         void processing_loop();
+
         void decision_loop(const IRCEvent& event );
 
         // EVENT HANDLERS
@@ -46,7 +50,6 @@ class splinterClient {
         // They are called when an event is received if mapped to that event type.
         void handle_channel_message(const IRCEvent& event);
         void handle_private_message(const IRCEvent& event);
-        const std::string& get_server() const;
         void list_clients( const std::string& reply_to );
         void destroy_client( const std::string& reply_to, const std::string& id );
         void help_prompt( std::string reply_to, std::string& command );
@@ -217,8 +220,6 @@ class splinterClient {
         std::map<std::string, std::shared_ptr<splinterClient>> clients_;
         int next_id_ = 1;
         std::atomic<bool> critical_thread_failed{false};
-
-
 };
 
 
