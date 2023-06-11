@@ -82,10 +82,10 @@ int main(int argc, char *argv[])
     }
 
     if (verbose) {
-        std::cout << "Server: " << master_server << '\n';
-        std::cout << "Port: " << master_port << '\n';
-        std::cout << "Nick: " << master_nick << '\n';
-        std::cout << "Password: " << master_password << '\n';
+        std::cout << "Server:\t\t" << master_server << '\n';
+        std::cout << "Port:\t\t" << master_port << '\n';
+        std::cout << "Nick:\t\t" << master_nick << '\n';
+        std::cout << "Password:\t\t" << master_password << '\n';
     }
 
     // validate server address
