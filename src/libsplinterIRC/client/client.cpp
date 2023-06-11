@@ -2,10 +2,7 @@
 
 splinterClient::splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password ) :
         server_(server), port_(port), nick_(nick), password_(password), socket_(-1)
-        {
-    this->connect();
-            this->run_event_loop();
-}
+        {}
 
 splinterClient::~splinterClient()
 {
@@ -73,12 +70,8 @@ const std::string& splinterClient::get_nick() const {
     return nick_;
 }
 
-bool splinterClient::password_is_valid( const std::string& command )
+bool splinterClient::password_is_valid( const std::string& passtoken )
 {
-    std::istringstream ss(command);
-    std::string token;
-    while (ss >> token);
-    bool result = (token == password_);
-
+    bool result = (passtoken == password_);
     return result;
 }

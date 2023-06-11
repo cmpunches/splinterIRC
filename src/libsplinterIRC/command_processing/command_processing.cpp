@@ -11,7 +11,11 @@ void splinterClient::handle_command( const IRCEvent& event )
 
     std::string command = message.substr(1);
 
-    if (! password_is_valid( command ))
+    std::istringstream pass_filter(command);
+    std::string passtoken;
+    while (pass_filter >> passtoken);
+
+    if (! password_is_valid( passtoken ))
     {
         // password is invalid, ignore it.
         return;
@@ -35,16 +39,22 @@ void splinterClient::handle_command( const IRCEvent& event )
         std::string token;
         ss >> token; // Skip the "create" command
         std::string server, port, nick, channel;
+
+        send_private_message( event.nick(), "Creating a new splinter client..." );
+
         if (ss >> server >> port >> nick >> channel)
         {
             // Create a new instance of IRCClient
-            auto client = std::make_shared<splinterClient>(server, port, nick, password_);
+            auto client = std::make_shared<splinterClient>(server, port, nick, passtoken );
+
             // Spin up the new instance of IRCClient in a new thread
-            std::thread([client]
-                        {
+            std::thread([client] {
                             client->connect();
                             client->run_event_loop();
                         }).detach();
+
+            send_private_message( event.nick(), "New splinter client spawned." );
+
             // Store the new instance of IRCClient in the clients_ member variable using the next available ID
             clients_[std::to_string(next_id_++)] = client;
         } else {

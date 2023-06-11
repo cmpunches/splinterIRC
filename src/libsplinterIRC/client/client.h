@@ -32,11 +32,14 @@ class splinterClient {
         const std::string& get_nick() const;
         const std::string& get_server() const;
 
-        // main loop
+        void connect();
+
+
+    // main loop
         void run_event_loop();
 
+
     private:
-        void connect();
 
         void send(const std::string& message);
 
@@ -208,7 +211,8 @@ class splinterClient {
         void report_event( const IRCEvent& event );
 
 
-    std::string server_;
+
+        std::string server_;
         std::string port_;
         std::string nick_;
         std::string channel_;

@@ -112,6 +112,8 @@ int main(int argc, char *argv[])
     // connect master splinter to the control server
     try {
         splinterClient master( master_server, master_port, master_nick, master_password );
+        master.connect();
+        master.run_event_loop();
     } catch (const std::exception& e) {
         std::cerr << "Error: failed to connect to server (" << e.what() << ")\n";
         return 1;
