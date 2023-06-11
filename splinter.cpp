@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
     std::string master_port;
     std::string master_nick;
     std::string master_password;
+
+    // TODO: Implement verbose mode
     bool verbose = false;
 
     const char* const short_opts = "s:p:n:w:vVh";
