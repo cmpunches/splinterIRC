@@ -34,10 +34,8 @@ class splinterClient {
 
         void connect();
 
-
-    // main loop
+        // main loop
         void run_event_loop();
-
 
     private:
 
@@ -51,8 +49,6 @@ class splinterClient {
         // EVENT HANDLERS
         // These are tied to the decision_loop() function.
         // They are called when an event is received if mapped to that event type.
-        void handle_channel_message(const IRCEvent& event);
-        void handle_private_message(const IRCEvent& event);
         void list_clients( const std::string& reply_to );
         void destroy_client( const std::string& reply_to, const std::string& id );
         void help_prompt( std::string reply_to, std::string& command );
@@ -210,8 +206,6 @@ class splinterClient {
 
         void report_event( const IRCEvent& event );
 
-
-
         std::string server_;
         std::string port_;
         std::string nick_;
@@ -225,7 +219,5 @@ class splinterClient {
         int next_id_ = 1;
         std::atomic<bool> critical_thread_failed{false};
 };
-
-
 
 #endif //SPLINTERIRC_CLIENT_H

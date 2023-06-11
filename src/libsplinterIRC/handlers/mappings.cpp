@@ -1,7 +1,6 @@
 #include "../client/client.h"
 
 // decision/action
-
 void splinterClient::decision_loop(const IRCEvent& event)
 {
     // type mappings for actions and events

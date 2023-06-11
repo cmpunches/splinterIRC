@@ -2,7 +2,6 @@
 #define SPLINTERIRC_IRCEVENT_H
 
 // orientation
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -168,6 +167,7 @@ class IRCEvent {
         const std::string& raw_message() const;
 
         Type type() const;
+
         const std::string& sender() const;
         const std::string& nick() const;
         const std::string& ident() const;
