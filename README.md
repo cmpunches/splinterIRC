@@ -1,6 +1,6 @@
 # splinterIRC
 
-A "highly hackable", event-driven IRC bot that with full protocol event coverage (RFC 2812).
+A "highly hackable", event-driven IRC bot with full protocol event coverage (RFC 2812).
 
 ## Original Author
 
@@ -40,7 +40,7 @@ Say something either to a channel or another user.
 
 ## Event Handling
 
-See 'src/libsplinterIRC/handlers/handlers.cpp'.  You'll be able to have splinter respond to any IRC events that an RFC-compliant server can send.
+See 'src/libsplinterIRC/handlers/handlers.cpp'.  You are able to have splinter respond to any IRC events that an RFC-compliant server can send.
 
 ## Future Features
 
