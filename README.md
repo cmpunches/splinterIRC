@@ -24,11 +24,11 @@ Creates a new client on a new set of detached threads.  This allows you to conne
 
 ## !list
 
-Lists all splinters that thread is aware of.  This version is currently using a spanning-tree style index, so, only a parent will see a child.  Future versions will have a shared index of splinters to allow a centralized command and control model.
+Lists all splinters.  This presents a shared index of splinters to allow a centralized command and control model.
 
 ## !destroy
 
-Destroys a splinter that the receiving thread is aware of.
+Destroys a splinter.  Beware that while new splinters survive their parents and each other, splinter ID 0 is the master splinter, and destroying it will end all other threads and exit the process.
 
 ## !join
 
@@ -44,7 +44,6 @@ See 'src/libsplinterIRC/handlers/handlers.cpp'.  You are able to have splinter r
 
 # Future Features
 
-- Centralized indexing of children. 
 - More refined/nuanced event parsing
 - More client actions.  While all events in the IRC protocol are currently handled, not all client actions of the IRC protocol are implemented.  Future versions will be able to perform any client action in the RFC protocol with orchestration through the command processing subsystem.
 - SASL and SSL support
