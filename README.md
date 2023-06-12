@@ -24,7 +24,7 @@ Creates a new client on a new set of detached threads.  This allows you to conne
 
 ## !list
 
-Lists all splinters.  This presents a shared index of splinters to allow a centralized command and control model.
+Lists all splinters.  This presents a shared index of splinters to allow a decentralized command and control model.
 
 ## !destroy
 
