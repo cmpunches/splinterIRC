@@ -45,20 +45,17 @@ void splinterClient::handle_command( const IRCEvent& event )
         if (ss >> server >> port >> nick >> channel)
         {
             // Create a new instance of IRCClient
-            auto client = std::make_shared<splinterClient>(server, port, nick, passtoken );
+            auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, splinter_id_ );
 
             // Spin up the new instance of IRCClient in a new thread
             std::thread([client] {
                             client->connect();
+                            client->add_to_clients();
                             client->run_event_loop();
                         }).detach();
 
-            send_private_message( event.nick(), "New splinter client spawned." );
-
-            // Store the new instance of IRCClient in the clients_ member variable using the next available ID
-            clients_[std::to_string(next_id_++)] = client;
-
-            send_private_message( event.nick(), "New splinter client registered in spanning tree index." );
+            send_private_message( event.nick(), "New splinter spawned." );
+            send_private_message( event.nick(), std::to_string(client->get_id()) + ": " + client->get_nick() + "@" + client->get_server() );
 
         } else {
             send_private_message( event.nick(), "Usage: !splinter <server> <port> <nick> <password>" );
@@ -94,18 +91,13 @@ void splinterClient::handle_command( const IRCEvent& event )
         std::string id, channel;
         if (ss >> id >> channel)
         {
-            if ( id == "0" )
-            {
-                join_channel( channel);
-                send_private_message( event.nick(), "0: joined channel " + channel );
-                return;
-            }
             // Check if a client with the provided identifier exists
             auto it = clients_.find(id);
             if (it != clients_.end())
             {
                 // Send the JOIN command to the specified client
                 it->second->join_channel(channel);
+                send_private_message( event.nick(), std::to_string(it->second->get_id()) +": joined channel " + channel );
             } else {
                 send_private_message( event.nick(), "No client with id '" + id + "' found" );
             }
@@ -123,11 +115,6 @@ void splinterClient::handle_command( const IRCEvent& event )
         std::string id, channel, message;
         if (ss >> id >> channel >> message)
         {
-            if ( id == "0" )
-            {
-                send_private_message( channel, message );
-                return;
-            }
             // Check if a client with the provided identifier exists
             auto it = clients_.find(id);
             if (it != clients_.end())
@@ -150,21 +137,20 @@ void splinterClient::help_prompt( std::string reply_to, std::string& command )
 
 void splinterClient::list_clients( const std::string& reply_to )
 {
-    send_private_message( reply_to, "'0': '" + server_ + "' (Me)");
     for (const auto& client_pair : clients_) {
         const auto& id = client_pair.first;
         const auto& client = client_pair.second;
-        send_private_message( reply_to, "'" + id + "': '" + client->get_server() + "'");
+        if ( client->splinter_id_ == splinter_id_ )
+        {
+            send_private_message( reply_to, "'" + id + "': '" + client->get_nick() + "@"  + client->get_server() + "' (ME)");
+        } else {
+            send_private_message( reply_to, "'" + id + "': '" + client->get_nick()+ "@" + client->get_server() + "'");
+        }
     }
 }
 
 void splinterClient::destroy_client( const std::string& reply_to, const std::string& id )
 {
-    if (id == "0")
-    {
-        send_private_message( reply_to, "Nodes can only kill child nodes, not themselves.");
-        return;
-    }
     // Check if a client with the provided identifier exists
     auto it = clients_.find(id);
     if (it != clients_.end())

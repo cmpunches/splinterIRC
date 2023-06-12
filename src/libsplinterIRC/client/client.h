@@ -18,9 +18,9 @@
 #include <algorithm>
 
 // the client that will be controlled by commands via PM on the control server
-class splinterClient {
+class splinterClient : public std::enable_shared_from_this<splinterClient> {
     public:
-        splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password );
+        splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password, int parent_id );
         ~splinterClient();
 
         // actions
@@ -31,11 +31,19 @@ class splinterClient {
 
         const std::string& get_nick() const;
         const std::string& get_server() const;
+        const int get_id() const;
 
         void connect();
 
         // main loop
         void run_event_loop();
+
+        // internal use for managing the client index
+        void add_to_clients();
+
+        static std::map<std::string, std::shared_ptr<splinterClient>> clients_;
+        int splinter_id_;
+        int get_next_id();
 
     private:
 
@@ -215,9 +223,10 @@ class splinterClient {
         std::mutex mutex_;
         std::condition_variable cond_;
         std::string password_;
-        std::map<std::string, std::shared_ptr<splinterClient>> clients_;
-        int next_id_ = 1;
+
         std::atomic<bool> critical_thread_failed{false};
 };
+
+
 
 #endif //SPLINTERIRC_CLIENT_H

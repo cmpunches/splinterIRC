@@ -1,8 +1,30 @@
 #include "client.h"
 
-splinterClient::splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password ) :
+std::map<std::string, std::shared_ptr<splinterClient>> splinterClient::clients_;
+
+int splinterClient::get_next_id() {
+    int next_id = -1;
+    for (const auto& client_pair : clients_) {
+        const auto& id = std::stoi(client_pair.first);
+        if (id > next_id) {
+            next_id = id;
+        }
+    }
+    return next_id + 1;
+}
+
+splinterClient::splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password, int parent_id ) :
         server_(server), port_(port), nick_(nick), password_(password), socket_(-1)
-        {}
+        {
+            splinter_id_ = get_next_id();
+        }
+
+
+void splinterClient::add_to_clients()
+{
+    int next_id = get_next_id();
+    clients_[std::to_string(next_id)] = shared_from_this();
+}
 
 splinterClient::~splinterClient()
 {
@@ -68,6 +90,10 @@ const std::string& splinterClient::get_server() const
 
 const std::string& splinterClient::get_nick() const {
     return nick_;
+}
+
+const int splinterClient::get_id() const {
+    return splinter_id_;
 }
 
 bool splinterClient::password_is_valid( const std::string& passtoken )

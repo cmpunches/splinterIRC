@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         std::cout << "Server:\t\t" << master_server << '\n';
         std::cout << "Port:\t\t" << master_port << '\n';
         std::cout << "Nick:\t\t" << master_nick << '\n';
-        std::cout << "Password:\t\t" << master_password << '\n';
+        std::cout << "Password:\t" << master_password << '\n';
     }
 
     // validate server address
@@ -112,14 +112,15 @@ int main(int argc, char *argv[])
     }
 
     // connect master splinter to the control server
-    try {
-        splinterClient master( master_server, master_port, master_nick, master_password );
-        master.connect();
-        master.run_event_loop();
-    } catch (const std::exception& e) {
-        std::cerr << "Error: failed to connect to server (" << e.what() << ")\n";
-        return 1;
-    }
+    //try {
+        auto master = std::make_shared<splinterClient>( master_server, master_port, master_nick, master_password, -1 );
+        master->connect();
+        master->add_to_clients();
+        master->run_event_loop();
+    //} catch (const std::exception& e) {
+    //    std::cerr << "Error: failed to connect to server (" << e.what() << ")\n";
+    //    return 1;
+   // }
 
     return 0;
 }
