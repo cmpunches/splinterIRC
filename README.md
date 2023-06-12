@@ -40,7 +40,7 @@ Say something either to a channel or another user.
 
 # Event Handling
 
-See 'src/libsplinterIRC/handlers/handlers.cpp'.  You are able to have splinter respond to any IRC events that an RFC-compliant server can send.
+See `src/libsplinterIRC/handlers/handlers.cpp`.  You are able to have splinter respond to any IRC events that an RFC-compliant server can send.
 
 # Future Features
 
