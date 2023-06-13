@@ -1,6 +1,139 @@
 #include "../client/client.h"
 
 //handlers
+// TODO: this should be reworked as not every CAP message is going to be SASL related
+//      and not every CAP ACK message is going to be SASL related
+void splinterClient::handle_S_RPL_CAP( const IRCEvent& event )
+{
+    handle_UNKNOWN(event);
+}
+
+// TODO: this should be reworked as not every CAP LS message is going to be SASL related
+//      and not every CAP ACK message is going to be SASL related
+void splinterClient::handle_S_RPL_CAP_LS( const IRCEvent& event )
+{
+    report_event(event);
+
+    if ( use_sasl_ )
+    {
+        // Check if the server supports SASL
+        if (event.message().find("sasl") != std::string::npos)
+        {
+            // Send CAP REQ command to request SASL capability
+            send("CAP REQ :sasl\r\n");
+        } else {
+            std::cerr << "Received an unprocessed CAP LS message.  Report this message as a parsing bug." << std::endl;
+            critical_thread_failed = true;
+        }
+    }
+}
+// TODO: this should be reworked as not every CAP ACK message is going to be SASL related
+void splinterClient::handle_S_RPL_CAP_ACK( const IRCEvent& event )
+{
+    report_event(event);
+
+    // is the capability response signifying SASL?
+    if ( ( event.message().find("ACK sasl") != std::string::npos) and ( event.target() == "*" ) )
+    {
+        // Send AUTHENTICATE command to initiate SASL authentication
+        send("AUTHENTICATE PLAIN\r\n");
+    } else {
+        std::cerr << "Received an unprocessed CAP ACK message.  Report this message as a parsing bug." << std::endl;
+        critical_thread_failed = true;
+    }
+}
+
+static const std::string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+
+std::string base64_encode(const std::string& s)
+{
+    std::string ret;
+    int val = 0;
+    int bits = -6;
+    const unsigned int b63 = 0x3F;
+
+    for (const auto& c : s)
+    {
+        val = (val << 8) + c;
+        bits += 8;
+        while (bits >= 0)
+        {
+            ret.push_back(base64_chars[(val >> bits) & b63]);
+            bits -= 6;
+        }
+    }
+
+    if (bits > -6)
+    {
+        ret.push_back(base64_chars[((val << 8) >> (bits + 8)) & b63]);
+    }
+
+    while (ret.size() % 4)
+    {
+        ret.push_back('=');
+    }
+
+    return ret;
+}
+
+void splinterClient::handle_AUTHENTICATE( const IRCEvent& event )
+{
+    report_event(event);
+
+    // Send AUTHENTICATE command with base64-encoded credentials
+    std::string auth = sasl_username_ + '\0' + sasl_username_ + '\0' + sasl_password_;
+    send("AUTHENTICATE " + base64_encode(auth) + "\r\n");
+}
+
+void splinterClient::handle_RPL_SASLSUCCESS( const IRCEvent& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_RPL_LOGGEDIN( const IRCEvent& event )
+{
+    report_event(event);
+
+    // SASL authentication successful
+
+    // Send CAP END command to end capability negotiation
+    send("CAP END\r\n");
+
+    set_nick( nick_ );
+    set_user( nick_ );
+}
+
+void splinterClient::handle_ERR_SASLFAIL( const IRCEvent& event )
+{
+    report_event(event);
+    // SASL authentication failed
+    std::cerr << "SASL AUTH FAILED." << std::endl;
+    critical_thread_failed = true;
+}
+
+void splinterClient::handle_ERR_SASLTOOLONG( const IRCEvent& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_ERR_SASLABORTED( const IRCEvent& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_ERR_SASLALREADY( const IRCEvent& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_RPL_SASLMECHS( const IRCEvent& event )
+{
+    report_event(event);
+}
+
 void splinterClient::handle_unassociated_event( const IRCEvent& event )
 {
     std::cerr << "Received a type without a handler associated.  Report this message as a bug." << std::endl;
@@ -740,47 +873,12 @@ void splinterClient::handle_ERR_NOPRIVS( const IRCEvent& event )
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LOGGEDIN( const IRCEvent& event )
-{
-    report_event(event);
-}
-
 void splinterClient::handle_RPL_LOGGEDOUT( const IRCEvent& event )
 {
     report_event(event);
 }
 
 void splinterClient::handle_ERR_NICKLOCKED( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_RPL_SASLSUCCESS( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_ERR_SASLFAIL( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_ERR_SASLTOOLONG( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_ERR_SASLABORTED( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_ERR_SASLALREADY( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_RPL_SASLMECHS( const IRCEvent& event )
 {
     report_event(event);
 }

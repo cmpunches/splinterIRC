@@ -16,7 +16,10 @@ class IRCEvent {
             JOIN,
             PART,
             KICK,
+            // use generic PRIVMSG then use a synthetic type during processing
             PRIVMSG,
+            // use a generic S_RPL_CAP then use a synthetic type during processing
+            S_RPL_CAP,
             NOTICE,
             PING,
             QUIT,
@@ -25,9 +28,14 @@ class IRCEvent {
             INVITE,
             ERROR,
 
+            // use a generic AUTHENTICATE for now
+            AUTHENTICATE,
+
             // synthetic types
             S_PRIVATE_MESSAGE,
             S_CHANNEL_MESSAGE,
+            S_RPL_CAP_LS,
+            S_RPL_CAP_ACK,
 
             // numeric replies
             RPL_WELCOME,

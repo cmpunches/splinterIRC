@@ -45,7 +45,9 @@ void splinterClient::handle_command( const IRCEvent& event )
         if (ss >> server >> port >> nick >> channel)
         {
             // Create a new instance of IRCClient
-            auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, splinter_id_ );
+            // TODO add options for this to splinter comment
+            //auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, splinter_id_ );
+            auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, use_sasl_, sasl_username_, sasl_password_, verbose_ );
 
             // Spin up the new instance of IRCClient in a new thread
             std::thread([client] {

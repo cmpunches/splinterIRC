@@ -30,6 +30,10 @@ IRCEvent::IRCEvent(const std::string& raw_message, const std::string& server) : 
             type_ = Type::PING;
         } else if (token == "ERROR" ) {
             type_ = Type::ERROR;
+        } else if (token == "AUTHENTICATE") {
+            type_ = Type::AUTHENTICATE;
+        } else if (token == "CAP") {
+            type_ = Type::S_RPL_CAP;
         }
         if (std::getline(ss, token, ' ')) {
             target_ = token;
@@ -67,6 +71,30 @@ IRCEvent::IRCEvent(const std::string& raw_message, const std::string& server) : 
         } else {
             channel_ = target_;
             type_ = Type::S_PRIVATE_MESSAGE;
+        }
+    }
+
+    if ( type_ == Type::S_RPL_CAP )
+    {
+        std::istringstream iss(message_);
+        std::string first_word;
+        if (iss >> first_word)
+        {
+            if (first_word == "LS")
+            {
+                type_ = Type::S_RPL_CAP_LS;
+            }
+            else if (first_word == "ACK")
+            {
+                type_ = Type::S_RPL_CAP_ACK;
+            }
+            // TODO: implement NAK so we can handle when a server doesn't support a capability
+            /*
+            else if (first_word == "NAK")
+            {
+                type_ = Type::S_RPL_CAP_NAK;
+            }
+             */
         }
     }
 }

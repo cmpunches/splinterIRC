@@ -578,8 +578,31 @@ void splinterClient::decision_loop(const IRCEvent& event)
             handle_RPL_SASLMECHS(event);
             break;
 
+        case IRCEvent::Type::S_RPL_CAP:
+            // this will never happen if the parser is doing its job
+            // so treat it like a parser error
+            handle_S_RPL_CAP(event);
+            break;
+
+        case IRCEvent::Type::S_RPL_CAP_LS:
+            handle_S_RPL_CAP_LS(event);
+            break;
+
+        case IRCEvent::Type::S_RPL_CAP_ACK:
+            handle_S_RPL_CAP_ACK(event);
+            break;
+
+        case IRCEvent::Type::AUTHENTICATE:
+            handle_AUTHENTICATE(event);
+            break;
+
         default:
             handle_unassociated_event(event);
             break;
+    }
+
+    if (verbose_)
+    {
+        std::cout << "Event: " << event.to_json() << std::endl;
     }
 }

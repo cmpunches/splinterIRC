@@ -16,11 +16,22 @@
 #include <atomic>
 #include "../events/IRCEvent.h"
 #include <algorithm>
+#include <string>
+#include <vector>
 
 // the client that will be controlled by commands via PM on the control server
 class splinterClient : public std::enable_shared_from_this<splinterClient> {
     public:
-        splinterClient(const std::string& server, const std::string& port, const std::string& nick, const std::string& password, int parent_id );
+        splinterClient(
+                const std::string& server,
+                const std::string& port,
+                const std::string& nick,
+                const std::string& password,
+                const bool use_sasl,
+                const std::string& sasl_username,
+                const std::string& sasl_password,
+                const bool verbose
+        );
         ~splinterClient();
 
         // actions
@@ -212,7 +223,15 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_ctcp_ping( const IRCEvent& event );
         void handle_ctcp( const IRCEvent& event );
 
+        // sasl handlers
+        void handle_S_RPL_CAP( const IRCEvent& event );
+        void handle_S_RPL_CAP_LS( const IRCEvent& event );
+        void handle_S_RPL_CAP_ACK( const IRCEvent& event );
+        void handle_AUTHENTICATE( const IRCEvent& event );
+
         void report_event( const IRCEvent& event );
+
+
 
         std::string server_;
         std::string port_;
@@ -223,6 +242,11 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         std::mutex mutex_;
         std::condition_variable cond_;
         std::string password_;
+        bool use_sasl_;
+        std::string sasl_username_;
+        std::string sasl_password_;
+        bool verbose_;
+
 
         std::atomic<bool> critical_thread_failed{false};
 };

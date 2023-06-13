@@ -14,6 +14,7 @@ IRCEvent::Type IRCEvent::verb_to_type( const std::string& token ) const
     } else if (token == "TOPIC" ) { return Type::TOPIC;
     } else if (token == "INVITE" ) { return Type::INVITE;
     } else if (token == "ERROR" ) { return Type::ERROR;
+    } else if (token == "CAP" ) { return Type::S_RPL_CAP;
     } else if ( token == "001" ) { return Type::RPL_WELCOME;
     } else if ( token == "002" ) { return Type::RPL_YOURHOST;
     } else if ( token == "003" ) { return Type::RPL_CREATED;
@@ -144,6 +145,7 @@ IRCEvent::Type IRCEvent::verb_to_type( const std::string& token ) const
     } else if ( token == "906" ) { return Type::ERR_SASLABORTED;
     } else if ( token == "907" ) { return Type::ERR_SASLALREADY;
     } else if ( token == "908" ) { return Type::RPL_SASLMECHS;
+    } else if ( token == "AUTHENTICATE" ) { return Type::AUTHENTICATE;
     }
     return Type::UNKNOWN;
 }
@@ -158,6 +160,7 @@ std::string IRCEvent::type_to_verb(Type type) const {
         case Type::PART: return "PART";
         case Type::KICK: return "KICK";
         case Type::PRIVMSG: return "PRIVMSG";
+        case Type::S_RPL_CAP: return "S_RPL_CAP";
         case Type::NOTICE: return "NOTICE";
         case Type::PING: return "PING";
         case Type::QUIT: return "QUIT";
@@ -167,6 +170,8 @@ std::string IRCEvent::type_to_verb(Type type) const {
         case Type::ERROR: return "ERROR";
         case Type::S_PRIVATE_MESSAGE: return "S_PRIVATE_MESSAGE";
         case Type::S_CHANNEL_MESSAGE: return "S_CHANNEL_MESSAGE";
+        case Type::S_RPL_CAP_LS: return "S_RPL_CAP_LS";
+        case Type::S_RPL_CAP_ACK: return "S_RPL_CAP_ACK";
         case Type::RPL_WELCOME: return "RPL_WELCOME";
         case Type::RPL_YOURHOST: return "RPL_YOURHOST";
         case Type::RPL_CREATED: return "RPL_CREATED";
@@ -297,6 +302,7 @@ std::string IRCEvent::type_to_verb(Type type) const {
         case Type::ERR_SASLABORTED: return "ERR_SASLABORTED";
         case Type::ERR_SASLALREADY: return "ERR_SASLALREADY";
         case Type::RPL_SASLMECHS: return "RPL_SASLMECHS";
+        case Type::AUTHENTICATE: return "AUTHENTICATE";
         default: return "UNMAPPED";
     }
 }
