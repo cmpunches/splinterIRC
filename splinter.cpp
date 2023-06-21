@@ -6,12 +6,12 @@
 #include <getopt.h>
 
 void show_usage(const std::string& program_name) {
-    std::cout << "Usage: " << program_name << " -s|--server SERVER -p|--port PORT -n|--nick NICK -w||--password PASSWORD [ -S|--use-sasl -u|--sasl-username SASL_USERNAME -k|--sasl-password SASL_PASSWORD ]" << std::endl
+    std::cout << "Usage: " << program_name << " -s|--server SERVER -p|--port PORT -n|--sender NICK -w||--password PASSWORD [ -S|--use-sasl -u|--sasl-username SASL_USERNAME -k|--sasl-password SASL_PASSWORD ]" << std::endl
               << std::endl
               << "Required options:" << std::endl
               << "  -s, --server=ADDR        Server address" << std::endl
               << "  -p, --port=PORT          Server port" << std::endl
-              << "  -n, --nick=NICK          Nickname" << std::endl
+              << "  -n, --sender=NICK          Nickname" << std::endl
               << "  -w, --password=PASS      Password" << std::endl
               << std::endl
               << "Optional options:" << std::endl
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     const option long_opts[] = {
             {"server", required_argument, nullptr, 's'},
             {"port", required_argument, nullptr, 'p'},
-            {"nick", required_argument, nullptr, 'n'},
+            {"sender", required_argument, nullptr, 'n'},
             {"password", required_argument, nullptr, 'w'},
             {"sasl-username", required_argument, nullptr, 'u'},
             {"sasl-password", required_argument, nullptr, 'k'},

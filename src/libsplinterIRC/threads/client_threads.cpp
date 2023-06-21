@@ -3,7 +3,7 @@
 void splinterClient::observation_loop()
 {
     // reads raw server input delimited by newline
-    // and processes the raw irc strings into IRCEvent objects
+    // and processes the raw irc strings into IRCEventEnvelope objects
     // and then queues them for the processing loop
     std::string buffer;
     while ( !critical_thread_failed )
@@ -38,11 +38,11 @@ void splinterClient::observation_loop()
 
             while (std::getline(stream, event_line, '\r'))
             {
-                // Create a new IRCEvent object for each line
+                // Create a new IRCEventEnvelope object for each line
                 std::unique_lock<std::mutex> lock(mutex_);
 
                 // push it to the ingestion queue
-                event_queue_.push(IRCEvent{event_line, server_});
+                event_queue_.push(IRCEventEnvelope{event_line, server_});
                 cond_.notify_one();
             }
         }
@@ -55,10 +55,10 @@ void splinterClient::processing_loop()
     // the orientation/decision loop is where the event handlers are mapped to actions
     while ( !critical_thread_failed )
     {
-        IRCEvent event = [&] {
+        IRCEventEnvelope event = [&] {
             std::unique_lock<std::mutex> lock(mutex_);
             cond_.wait(lock, [this] { return !event_queue_.empty(); });
-            IRCEvent event = event_queue_.front();
+            IRCEventEnvelope event = event_queue_.front();
             event_queue_.pop();
             return event;
         }();

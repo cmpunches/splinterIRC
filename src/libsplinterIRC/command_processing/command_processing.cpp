@@ -1,8 +1,10 @@
 #include "../client/client.h"
 
-void splinterClient::handle_command( const IRCEvent& event )
+void splinterClient::handle_command( IRCEventEnvelope& event )
 {
-    std::string message = event.message();
+    std::string message = event.get_scalar_attribute( "message");
+    std::string sender = event.get_scalar_attribute( "nick" );
+
     if ( message[0] != '!' )
     {
         // it's not a command, ignore it.
@@ -23,7 +25,7 @@ void splinterClient::handle_command( const IRCEvent& event )
 
     if (command.find("help") == 0)
     {
-        help_prompt( event.nick(), command );
+        help_prompt( sender, command );
     }
 
     if (command.find("quit") == 0)
@@ -40,13 +42,11 @@ void splinterClient::handle_command( const IRCEvent& event )
         ss >> token; // Skip the "create" command
         std::string server, port, nick, channel;
 
-        send_private_message( event.nick(), "Creating a new splinter client..." );
+        send_private_message( sender, "Creating a new splinter client..." );
 
         if (ss >> server >> port >> nick >> channel)
         {
             // Create a new instance of IRCClient
-            // TODO add options for this to splinter comment
-            //auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, splinter_id_ );
             auto client = std::make_shared<splinterClient>(server, port, nick, passtoken, use_sasl_, sasl_username_, sasl_password_, verbose_ );
 
             // Spin up the new instance of IRCClient in a new thread
@@ -56,17 +56,17 @@ void splinterClient::handle_command( const IRCEvent& event )
                             client->run_event_loop();
                         }).detach();
 
-            send_private_message( event.nick(), "New splinter spawned." );
-            send_private_message( event.nick(), std::to_string(client->get_id()) + ": " + client->get_nick() + "@" + client->get_server() );
+            send_private_message(sender, "New splinter spawned." );
+            send_private_message(sender, std::to_string(client->get_id()) + ": " + client->get_nick() + "@" + client->get_server() );
 
         } else {
-            send_private_message( event.nick(), "Usage: !splinter <server> <port> <nick> <password>" );
+            send_private_message(sender, "Usage: !splinter <server> <port> <sender> <password>" );
         }
     }
 
     if (command.find("list") == 0)
     {
-        list_clients( event.nick() );
+        list_clients( sender );
     }
 
     if (command.find("destroy") == 0)
@@ -78,14 +78,16 @@ void splinterClient::handle_command( const IRCEvent& event )
         std::string id;
         if (ss >> id)
         {
-            destroy_client( event.nick(), id );
+            destroy_client(sender, id );
         } else {
-            send_private_message( event.nick(), "Usage: !destroy <id>" );
+            send_private_message(sender, "Usage: !destroy <id>" );
         }
     }
 
+    std::cerr << "command: " << command << std::endl;
     if (command.find("join") == 0)
     {
+        std::cout << "join command" << std::endl;
         // Parse the command arguments
         std::istringstream ss(command);
         std::string token;
@@ -99,12 +101,12 @@ void splinterClient::handle_command( const IRCEvent& event )
             {
                 // Send the JOIN command to the specified client
                 it->second->join_channel(channel);
-                send_private_message( event.nick(), std::to_string(it->second->get_id()) +": joined channel " + channel );
+                send_private_message(sender, std::to_string(it->second->get_id()) + ": joined channel " + channel );
             } else {
-                send_private_message( event.nick(), "No client with id '" + id + "' found" );
+                send_private_message(sender, "No client with id '" + id + "' found" );
             }
         } else {
-            send_private_message( event.nick(), "Usage: !join <id> <channel>" );
+            send_private_message(sender, "Usage: !join <id> <channel>" );
         }
     }
 
@@ -114,20 +116,20 @@ void splinterClient::handle_command( const IRCEvent& event )
         std::istringstream ss(command);
         std::string token;
         ss >> token; // Skip the "join" command
-        std::string id, channel, message;
-        if (ss >> id >> channel >> message)
+        std::string id, channel, tmessage;
+        if (ss >> id >> channel >> tmessage)
         {
             // Check if a client with the provided identifier exists
             auto it = clients_.find(id);
             if (it != clients_.end())
             {
                 // Send the JOIN command to the specified client
-                it->second->send_private_message( channel, message );
+                it->second->send_private_message( channel, tmessage );
             } else {
-                send_private_message( event.nick(), "No client with id '" + id + "' found" );
+                send_private_message( sender, "No client with id '" + id + "' found" );
             }
         } else {
-            send_private_message( event.nick(), "Usage: !say <id> <channel|nick>" );
+            send_private_message( sender, "Usage: !say <id> <channel|sender> <message>" );
         }
     }
 }

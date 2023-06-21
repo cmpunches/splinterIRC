@@ -14,7 +14,7 @@
 #include <sstream>
 #include <map>
 #include <atomic>
-#include "../events/IRCEvent.h"
+#include "../events/IRCEventv3.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -38,217 +38,270 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void join_channel( std::string channel );
         void set_nick( std::string nick );
         void send_private_message( std::string nick, std::string message );
+
+        // register the user
         void set_user( std::string user );
 
+        // get the sender of the client
         const std::string& get_nick() const;
-        const std::string& get_server() const;
-        const int get_id() const;
 
+        // get the server we are connected to
+        const std::string& get_server() const;
+
+        // connect to the targeted server
         void connect();
+
+        // internal use for managing the splinter index
+        void add_to_clients();
 
         // main loop
         void run_event_loop();
 
-        // internal use for managing the client index
-        void add_to_clients();
-
-        static std::map<std::string, std::shared_ptr<splinterClient>> clients_;
-        int splinter_id_;
-        int get_next_id();
 
     private:
 
+        static std::map<std::string, std::shared_ptr<splinterClient>> clients_;
+
+        // get the current splinter id
+        const int get_id() const;
+
+        // current splinter id
+        int splinter_id_;
+
+        // next available splinter id
+        int get_next_id();
+
         void send(const std::string& message);
+
 
         void observation_loop();
         void processing_loop();
 
-        void decision_loop(const IRCEvent& event );
+        void decision_loop( IRCEventEnvelope& event );
 
         // EVENT HANDLERS
         // These are tied to the decision_loop() function.
-        // They are called when an event is received if mapped to that event type.
+        // They are called when an event is received if mapped to that event command.
         void list_clients( const std::string& reply_to );
         void destroy_client( const std::string& reply_to, const std::string& id );
         void help_prompt( std::string reply_to, std::string& command );
         bool password_is_valid( const std::string& command );
-        void handle_command( const IRCEvent& event );
-        void handle_unassociated_event( const IRCEvent& event );
-        void handle_UNKNOWN( const IRCEvent& event );
-        void handle_JOIN( const IRCEvent& event );
-        void handle_PART( const IRCEvent& event );
-        void handle_KICK( const IRCEvent& event );
-        void handle_NOTICE( const IRCEvent& event );
-        void handle_PING( const IRCEvent& event );
-        void handle_QUIT( const IRCEvent& event );
-        void handle_NICK( const IRCEvent& event );
-        void handle_TOPIC( const IRCEvent& event );
-        void handle_INVITE( const IRCEvent& event );
-        void handle_ERROR( const IRCEvent& event );
-        void handle_S_PRIVATE_MESSAGE( const IRCEvent& event );
-        void handle_S_CHANNEL_MESSAGE( const IRCEvent& event );
-        void handle_RPL_WELCOME( const IRCEvent& event );
-        void handle_RPL_YOURHOST( const IRCEvent& event );
-        void handle_RPL_CREATED( const IRCEvent& event );
-        void handle_RPL_MYINFO( const IRCEvent& event );
-        void handle_RPL_ISUPPORT( const IRCEvent& event );
-        void handle_RPL_BOUNCE( const IRCEvent& event );
-        void handle_RPL_STATSCOMMANDS( const IRCEvent& event );
-        void handle_RPL_ENDOFSTATS( const IRCEvent& event );
-        void handle_RPL_STATSUPTIME( const IRCEvent& event );
-        void handle_RPL_UMODEIS( const IRCEvent& event );
-        void handle_RPL_LUSERCLIENT( const IRCEvent& event );
-        void handle_RPL_LUSEROP( const IRCEvent& event );
-        void handle_RPL_LUSERUNKNOWN( const IRCEvent& event );
-        void handle_RPL_LUSERCHANNELS( const IRCEvent& event );
-        void handle_RPL_LUSERME( const IRCEvent& event );
-        void handle_RPL_ADMINME( const IRCEvent& event );
-        void handle_RPL_ADMINLOC1( const IRCEvent& event );
-        void handle_RPL_ADMINLOC2( const IRCEvent& event );
-        void handle_RPL_ADMINEMAIL( const IRCEvent& event );
-        void handle_RPL_TRYAGAIN( const IRCEvent& event );
-        void handle_RPL_LOCALUSERS( const IRCEvent& event );
-        void handle_RPL_GLOBALUSERS( const IRCEvent& event );
-        void handle_RPL_WHOISCERTFP( const IRCEvent& event );
-        void handle_RPL_NONE( const IRCEvent& event );
-        void handle_RPL_AWAY( const IRCEvent& event );
-        void handle_RPL_USERHOST( const IRCEvent& event );
-        void handle_RPL_UNAWAY( const IRCEvent& event );
-        void handle_RPL_NOWAWAY( const IRCEvent& event );
-        void handle_RPL_WHOREPLY( const IRCEvent& event );
-        void handle_RPL_ENDOFWHO( const IRCEvent& event );
-        void handle_RPL_WHOISREGNICK( const IRCEvent& event );
-        void handle_RPL_WHOISUSER( const IRCEvent& event );
-        void handle_RPL_WHOISSERVER( const IRCEvent& event );
-        void handle_RPL_WHOISOPERATOR( const IRCEvent& event );
-        void handle_RPL_WHOWASUSER( const IRCEvent& event );
-        void handle_RPL_WHOISIDLE( const IRCEvent& event );
-        void handle_RPL_ENDOFWHOIS( const IRCEvent& event );
-        void handle_RPL_WHOISCHANNELS( const IRCEvent& event );
-        void handle_RPL_WHOISSPECIAL( const IRCEvent& event );
-        void handle_RPL_LISTSTART( const IRCEvent& event );
-        void handle_RPL_LIST( const IRCEvent& event );
-        void handle_RPL_LISTEND( const IRCEvent& event );
-        void handle_RPL_CHANNELMODEIS( const IRCEvent& event );
-        void handle_RPL_CREATIONTIME( const IRCEvent& event );
-        void handle_RPL_WHOISACCOUNT( const IRCEvent& event );
-        void handle_RPL_NOTOPIC( const IRCEvent& event );
-        void handle_RPL_TOPIC( const IRCEvent& event );
-        void handle_RPL_TOPICWHOTIME( const IRCEvent& event );
-        void handle_RPL_INVITELIST( const IRCEvent& event );
-        void handle_RPL_ENDOFINVITELIST( const IRCEvent& event );
-        void handle_RPL_WHOISACTUALLY( const IRCEvent& event );
-        void handle_RPL_INVITING( const IRCEvent& event );
-        void handle_RPL_INVEXLIST( const IRCEvent& event );
-        void handle_RPL_ENDOFINVEXLIST( const IRCEvent& event );
-        void handle_RPL_EXCEPTLIST( const IRCEvent& event );
-        void handle_RPL_ENDOFEXCEPTLIST( const IRCEvent& event );
-        void handle_RPL_VERSION( const IRCEvent& event );
-        void handle_RPL_NAMREPLY( const IRCEvent& event );
-        void handle_RPL_ENDOFNAMES( const IRCEvent& event );
-        void handle_RPL_LINKS( const IRCEvent& event );
-        void handle_RPL_ENDOFLINKS( const IRCEvent& event );
-        void handle_RPL_BANLIST( const IRCEvent& event );
-        void handle_RPL_ENDOFBANLIST( const IRCEvent& event );
-        void handle_RPL_ENDOFWHOWAS( const IRCEvent& event );
-        void handle_RPL_INFO( const IRCEvent& event );
-        void handle_RPL_ENDOFINFO( const IRCEvent& event );
-        void handle_RPL_MOTDSTART( const IRCEvent& event );
-        void handle_RPL_MOTD( const IRCEvent& event );
-        void handle_RPL_ENDOFMOTD( const IRCEvent& event );
-        void handle_RPL_WHOISHOST( const IRCEvent& event );
-        void handle_RPL_WHOISMODES( const IRCEvent& event );
-        void handle_RPL_YOUREOPER( const IRCEvent& event );
-        void handle_RPL_REHASHING( const IRCEvent& event );
-        void handle_RPL_TIME( const IRCEvent& event );
-        void handle_ERR_UNKNOWNERROR( const IRCEvent& event );
-        void handle_ERR_NOSUCHNICK( const IRCEvent& event );
-        void handle_ERR_NOSUCHSERVER( const IRCEvent& event );
-        void handle_ERR_NOSUCHCHANNEL( const IRCEvent& event );
-        void handle_ERR_CANNOTSENDTOCHAN( const IRCEvent& event );
-        void handle_ERR_TOOMANYCHANNELS( const IRCEvent& event );
-        void handle_ERR_WASNOSUCHNICK( const IRCEvent& event );
-        void handle_ERR_NOORIGIN( const IRCEvent& event );
-        void handle_ERR_NORECIPIENT( const IRCEvent& event );
-        void handle_ERR_NOTEXTTOSEND( const IRCEvent& event );
-        void handle_ERR_INPUTTOOLONG( const IRCEvent& event );
-        void handle_ERR_UNKNOWNCOMMAND( const IRCEvent& event );
-        void handle_ERR_NOMOTD( const IRCEvent& event );
-        void handle_ERR_NONICKNAMEGIVEN( const IRCEvent& event );
-        void handle_ERR_ERRONEUSNICKNAME( const IRCEvent& event );
-        void handle_ERR_NICKNAMEINUSE( const IRCEvent& event );
-        void handle_ERR_NICKCOLLISION( const IRCEvent& event );
-        void handle_ERR_USERNOTINCHANNEL( const IRCEvent& event );
-        void handle_ERR_NOTONCHANNEL( const IRCEvent& event );
-        void handle_ERR_USERONCHANNEL( const IRCEvent& event );
-        void handle_ERR_NOTREGISTERED( const IRCEvent& event );
-        void handle_ERR_NEEDMOREPARAMS( const IRCEvent& event );
-        void handle_ERR_ALREADYREGISTERED( const IRCEvent& event );
-        void handle_ERR_PASSWDMISMATCH( const IRCEvent& event );
-        void handle_ERR_YOUREBANNEDCREEP( const IRCEvent& event );
-        void handle_ERR_CHANNELISFULL( const IRCEvent& event );
-        void handle_ERR_UNKNOWNMODE( const IRCEvent& event );
-        void handle_ERR_INVITEONLYCHAN( const IRCEvent& event );
-        void handle_ERR_BANNEDFROMCHAN( const IRCEvent& event );
-        void handle_ERR_BADCHANNELKEY( const IRCEvent& event );
-        void handle_ERR_BADCHANMASK( const IRCEvent& event );
-        void handle_ERR_NOPRIVILEGES( const IRCEvent& event );
-        void handle_ERR_CHANOPRIVSNEEDED( const IRCEvent& event );
-        void handle_ERR_CANTKILLSERVER( const IRCEvent& event );
-        void handle_ERR_NOOPERHOST( const IRCEvent& event );
-        void handle_ERR_UMODEUNKNOWNFLAG( const IRCEvent& event );
-        void handle_ERR_USERSDONTMATCH( const IRCEvent& event );
-        void handle_ERR_HELPNOTFOUND( const IRCEvent& event );
-        void handle_ERR_INVALIDKEY( const IRCEvent& event );
-        void handle_RPL_STARTTLS( const IRCEvent& event );
-        void handle_RPL_WHOISSECURE( const IRCEvent& event );
-        void handle_ERR_STARTTLS( const IRCEvent& event );
-        void handle_ERR_INVALIDMODEPARAM( const IRCEvent& event );
-        void handle_RPL_HELPSTART( const IRCEvent& event );
-        void handle_RPL_HELPTXT( const IRCEvent& event );
-        void handle_RPL_ENDOFHELP( const IRCEvent& event );
-        void handle_ERR_NOPRIVS( const IRCEvent& event );
-        void handle_RPL_LOGGEDIN( const IRCEvent& event );
-        void handle_RPL_LOGGEDOUT( const IRCEvent& event );
-        void handle_ERR_NICKLOCKED( const IRCEvent& event );
-        void handle_RPL_SASLSUCCESS( const IRCEvent& event );
-        void handle_ERR_SASLFAIL( const IRCEvent& event );
-        void handle_ERR_SASLTOOLONG( const IRCEvent& event );
-        void handle_ERR_SASLABORTED( const IRCEvent& event );
-        void handle_ERR_SASLALREADY( const IRCEvent& event );
-        void handle_RPL_SASLMECHS( const IRCEvent& event );
+        void handle_command( IRCEventEnvelope& event );
+        void handle_unassociated_event( IRCEventEnvelope& event );
+        void handle_UNKNOWN( IRCEventEnvelope& event );
+        void handle_JOIN( IRCEventEnvelope& event );
+        void handle_PART( IRCEventEnvelope& event );
+        void handle_KICK( IRCEventEnvelope& event );
+        void handle_NOTICE( IRCEventEnvelope& event );
+        void handle_PING( IRCEventEnvelope& event );
+        void handle_QUIT( IRCEventEnvelope& event );
+        void handle_NICK( IRCEventEnvelope& event );
+        void handle_TOPIC( IRCEventEnvelope& event );
+        void handle_INVITE( IRCEventEnvelope& event );
+        void handle_ERROR( IRCEventEnvelope& event );
+        void handle_S_PRIVATE_MESSAGE( IRCEventEnvelope& event );
+        void handle_S_CHANNEL_MESSAGE( IRCEventEnvelope& event );
+        void handle_RPL_WELCOME( IRCEventEnvelope& event );
+        void handle_RPL_YOURHOST( IRCEventEnvelope& event );
+        void handle_RPL_CREATED( IRCEventEnvelope& event );
+        void handle_RPL_MYINFO( IRCEventEnvelope& event );
+        void handle_RPL_ISUPPORT( IRCEventEnvelope& event );
+        void handle_RPL_BOUNCE( IRCEventEnvelope& event );
+        void handle_RPL_STATSCOMMANDS( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFSTATS( IRCEventEnvelope& event );
+        void handle_RPL_STATSUPTIME( IRCEventEnvelope& event );
+        void handle_RPL_UMODEIS( IRCEventEnvelope& event );
+        void handle_RPL_LUSERCLIENT( IRCEventEnvelope& event );
+        void handle_RPL_LUSEROP( IRCEventEnvelope& event );
+        void handle_RPL_LUSERUNKNOWN( IRCEventEnvelope& event );
+        void handle_RPL_LUSERCHANNELS( IRCEventEnvelope& event );
+        void handle_RPL_LUSERME( IRCEventEnvelope& event );
+        void handle_RPL_ADMINME( IRCEventEnvelope& event );
+        void handle_RPL_ADMINLOC1( IRCEventEnvelope& event );
+        void handle_RPL_ADMINLOC2( IRCEventEnvelope& event );
+        void handle_RPL_ADMINEMAIL( IRCEventEnvelope& event );
+        void handle_RPL_TRYAGAIN( IRCEventEnvelope& event );
+        void handle_RPL_LOCALUSERS( IRCEventEnvelope& event );
+        void handle_RPL_GLOBALUSERS( IRCEventEnvelope& event );
+        void handle_RPL_WHOISCERTFP( IRCEventEnvelope& event );
+        void handle_RPL_NONE( IRCEventEnvelope& event );
+        void handle_RPL_AWAY( IRCEventEnvelope& event );
+        void handle_RPL_USERHOST( IRCEventEnvelope& event );
+        void handle_RPL_UNAWAY( IRCEventEnvelope& event );
+        void handle_RPL_NOWAWAY( IRCEventEnvelope& event );
+        void handle_RPL_WHOREPLY( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFWHO( IRCEventEnvelope& event );
+        void handle_RPL_WHOISREGNICK( IRCEventEnvelope& event );
+        void handle_RPL_WHOISUSER( IRCEventEnvelope& event );
+        void handle_RPL_WHOISSERVER( IRCEventEnvelope& event );
+        void handle_RPL_WHOISOPERATOR( IRCEventEnvelope& event );
+        void handle_RPL_WHOWASUSER( IRCEventEnvelope& event );
+        void handle_RPL_WHOISIDLE( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFWHOIS( IRCEventEnvelope& event );
+        void handle_RPL_WHOISCHANNELS( IRCEventEnvelope& event );
+        void handle_RPL_WHOISSPECIAL( IRCEventEnvelope& event );
+        void handle_RPL_LISTSTART( IRCEventEnvelope& event );
+        void handle_RPL_LIST( IRCEventEnvelope& event );
+        void handle_RPL_LISTEND( IRCEventEnvelope& event );
+        void handle_RPL_CHANNELMODEIS( IRCEventEnvelope& event );
+        void handle_RPL_CREATIONTIME( IRCEventEnvelope& event );
+        void handle_RPL_WHOISACCOUNT( IRCEventEnvelope& event );
+        void handle_RPL_NOTOPIC( IRCEventEnvelope& event );
+        void handle_RPL_TOPIC( IRCEventEnvelope& event );
+        void handle_RPL_TOPICWHOTIME( IRCEventEnvelope& event );
+        void handle_RPL_INVITELIST( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFINVITELIST( IRCEventEnvelope& event );
+        void handle_RPL_WHOISACTUALLY( IRCEventEnvelope& event );
+        void handle_RPL_INVITING( IRCEventEnvelope& event );
+        void handle_RPL_INVEXLIST( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFINVEXLIST( IRCEventEnvelope& event );
+        void handle_RPL_EXCEPTLIST( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFEXCEPTLIST( IRCEventEnvelope& event );
+        void handle_RPL_VERSION( IRCEventEnvelope& event );
+        void handle_RPL_NAMREPLY( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFNAMES( IRCEventEnvelope& event );
+        void handle_RPL_LINKS( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFLINKS( IRCEventEnvelope& event );
+        void handle_RPL_BANLIST( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFBANLIST( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFWHOWAS( IRCEventEnvelope& event );
+        void handle_RPL_INFO( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFINFO( IRCEventEnvelope& event );
+        void handle_RPL_MOTDSTART( IRCEventEnvelope& event );
+        void handle_RPL_MOTD( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFMOTD( IRCEventEnvelope& event );
+        void handle_RPL_WHOISHOST( IRCEventEnvelope& event );
+        void handle_RPL_WHOISMODES( IRCEventEnvelope& event );
+        void handle_RPL_YOUREOPER( IRCEventEnvelope& event );
+        void handle_RPL_REHASHING( IRCEventEnvelope& event );
+        void handle_RPL_TIME( IRCEventEnvelope& event );
+        void handle_ERR_UNKNOWNERROR( IRCEventEnvelope& event );
+        void handle_ERR_NOSUCHNICK( IRCEventEnvelope& event );
+        void handle_ERR_NOSUCHSERVER( IRCEventEnvelope& event );
+        void handle_ERR_NOSUCHCHANNEL( IRCEventEnvelope& event );
+        void handle_ERR_CANNOTSENDTOCHAN( IRCEventEnvelope& event );
+        void handle_ERR_TOOMANYCHANNELS( IRCEventEnvelope& event );
+        void handle_ERR_WASNOSUCHNICK( IRCEventEnvelope& event );
+        void handle_ERR_NOORIGIN( IRCEventEnvelope& event );
+        void handle_ERR_NORECIPIENT( IRCEventEnvelope& event );
+        void handle_ERR_NOTEXTTOSEND( IRCEventEnvelope& event );
+        void handle_ERR_INPUTTOOLONG( IRCEventEnvelope& event );
+        void handle_ERR_UNKNOWNCOMMAND( IRCEventEnvelope& event );
+        void handle_ERR_NOMOTD( IRCEventEnvelope& event );
+        void handle_ERR_NONICKNAMEGIVEN( IRCEventEnvelope& event );
+        void handle_ERR_ERRONEUSNICKNAME( IRCEventEnvelope& event );
+        void handle_ERR_NICKNAMEINUSE( IRCEventEnvelope& event );
+        void handle_ERR_NICKCOLLISION( IRCEventEnvelope& event );
+        void handle_ERR_USERNOTINCHANNEL( IRCEventEnvelope& event );
+        void handle_ERR_NOTONCHANNEL( IRCEventEnvelope& event );
+        void handle_ERR_USERONCHANNEL( IRCEventEnvelope& event );
+        void handle_ERR_NOTREGISTERED( IRCEventEnvelope& event );
+        void handle_ERR_NEEDMOREPARAMS( IRCEventEnvelope& event );
+        void handle_ERR_ALREADYREGISTERED( IRCEventEnvelope& event );
+        void handle_ERR_PASSWDMISMATCH( IRCEventEnvelope& event );
+        void handle_ERR_YOUREBANNEDCREEP( IRCEventEnvelope& event );
+        void handle_ERR_CHANNELISFULL( IRCEventEnvelope& event );
+        void handle_ERR_UNKNOWNMODE( IRCEventEnvelope& event );
+        void handle_ERR_INVITEONLYCHAN( IRCEventEnvelope& event );
+        void handle_ERR_BANNEDFROMCHAN( IRCEventEnvelope& event );
+        void handle_ERR_BADCHANNELKEY( IRCEventEnvelope& event );
+        void handle_ERR_BADCHANMASK( IRCEventEnvelope& event );
+        void handle_ERR_NOPRIVILEGES( IRCEventEnvelope& event );
+        void handle_ERR_CHANOPRIVSNEEDED( IRCEventEnvelope& event );
+        void handle_ERR_CANTKILLSERVER( IRCEventEnvelope& event );
+        void handle_ERR_NOOPERHOST( IRCEventEnvelope& event );
+        void handle_ERR_UMODEUNKNOWNFLAG( IRCEventEnvelope& event );
+        void handle_ERR_USERSDONTMATCH( IRCEventEnvelope& event );
+        void handle_ERR_HELPNOTFOUND( IRCEventEnvelope& event );
+        void handle_ERR_INVALIDKEY( IRCEventEnvelope& event );
+        void handle_RPL_STARTTLS( IRCEventEnvelope& event );
+        void handle_RPL_WHOISSECURE( IRCEventEnvelope& event );
+        void handle_ERR_STARTTLS( IRCEventEnvelope& event );
+        void handle_ERR_INVALIDMODEPARAM( IRCEventEnvelope& event );
+        void handle_RPL_HELPSTART( IRCEventEnvelope& event );
+        void handle_RPL_HELPTXT( IRCEventEnvelope& event );
+        void handle_RPL_ENDOFHELP( IRCEventEnvelope& event );
+        void handle_ERR_NOPRIVS( IRCEventEnvelope& event );
+        void handle_RPL_LOGGEDIN( IRCEventEnvelope& event );
+        void handle_RPL_LOGGEDOUT(  IRCEventEnvelope& event );
+        void handle_ERR_NICKLOCKED( IRCEventEnvelope& event );
+        void handle_RPL_SASLSUCCESS( IRCEventEnvelope& event );
+        void handle_ERR_SASLFAIL(  IRCEventEnvelope& event );
+        void handle_ERR_SASLTOOLONG(  IRCEventEnvelope& event );
+        void handle_ERR_SASLABORTED(  IRCEventEnvelope& event );
+        void handle_ERR_SASLALREADY(  IRCEventEnvelope& event );
+        void handle_RPL_SASLMECHS(  IRCEventEnvelope& event );
 
-        void handle_ctcp_version(const IRCEvent& event);
-        void handle_ctcp_time( const IRCEvent& event );
-        void handle_ctcp_ping( const IRCEvent& event );
-        void handle_ctcp( const IRCEvent& event );
+        void handle_ctcp_version( IRCEventEnvelope& event);
+        void handle_ctcp_time(  IRCEventEnvelope& event );
+        void handle_ctcp_ping(  IRCEventEnvelope& event );
+        void handle_ctcp( IRCEventEnvelope& event );
 
         // sasl handlers
-        void handle_S_RPL_CAP( const IRCEvent& event );
-        void handle_S_RPL_CAP_LS( const IRCEvent& event );
-        void handle_S_RPL_CAP_ACK( const IRCEvent& event );
-        void handle_AUTHENTICATE( const IRCEvent& event );
+        void handle_S_RPL_CAP( IRCEventEnvelope& event );
+        void handle_S_RPL_CAP_LS( IRCEventEnvelope& event );
+        void handle_S_RPL_CAP_ACK( IRCEventEnvelope& event );
+        void handle_AUTHENTICATE( IRCEventEnvelope& event );
 
-        void report_event( const IRCEvent& event );
+        void report_event( IRCEventEnvelope& event );
 
-
-
+        // control server
         std::string server_;
+
+        // control server port
         std::string port_;
+
+        // control server sender
         std::string nick_;
-        std::string channel_;
+
+        // control server connection socket
         int socket_;
-        std::queue<IRCEvent> event_queue_;
+
+        // thread management
+        std::queue<IRCEventEnvelope> event_queue_;
         std::mutex mutex_;
         std::condition_variable cond_;
+
+        // password to use for orchestration of the splinterIRC client
         std::string password_;
+
+        // whether SASL auth is desired
         bool use_sasl_;
+
+        // whether SASL auth was successful
+        bool sasl_authenticated_ = false;
+
+        // the username and password to use for SASL auth
         std::string sasl_username_;
         std::string sasl_password_;
+
+        // to_json debugging info
         bool verbose_;
 
-
+        // flag that tells event loops to prepare to exit
         std::atomic<bool> critical_thread_failed{false};
+
+        // the some features of the IRC protocol are stateful, so we need to
+        // keep track of what state we're in for some of the handlers
+        enum State {
+            // initiating a connection to control
+            CLIENT_CONNECTING,
+            // business as usual once connected
+            CLIENT_CONNECTED,
+            // disconnecting from control
+            CLIENT_DISCONNECTING,
+            // disconnected from control
+            CLIENT_DISCONNECTED,
+            // authenticating with SASL
+            SASL_AUTHENTICATING,
+            // joining a channel
+            CHANNEL_JOINING,
+            // retrieving capabilities
+            CAPABILITIES_GETTING
+        };
+
+        // initial state is disconnected
+        int state_ = State::CLIENT_CONNECTED;
 };
 
 

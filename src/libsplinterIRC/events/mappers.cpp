@@ -1,6 +1,6 @@
-#include "IRCEvent.h"
+#include "IRCEventv3.h"
 
-IRCEvent::Type IRCEvent::verb_to_type( const std::string& token ) const
+IRCEventEnvelope::Type IRCEventEnvelope::verb_to_type(const std::string& token ) const
 {
     if (token == "JOIN") { return Type::JOIN;
     } else if (token == "PART") { return Type::PART;
@@ -15,6 +15,10 @@ IRCEvent::Type IRCEvent::verb_to_type( const std::string& token ) const
     } else if (token == "INVITE" ) { return Type::INVITE;
     } else if (token == "ERROR" ) { return Type::ERROR;
     } else if (token == "CAP" ) { return Type::S_RPL_CAP;
+    } else if (token == "S_RPL_CAP_LS" ) { return Type::S_RPL_CAP_LS;
+    } else if (token == "S_RPL_CAP_ACK" ) { return Type::S_RPL_CAP_ACK;
+    } else if (token == "S_RPL_CAP_UNKNOWN" ) { return Type::S_RPL_CAP_UNKNOWN;
+    } else if (token == "S_RPL_CAP_NAK" ) { return Type::S_RPL_CAP_NAK;
     } else if ( token == "001" ) { return Type::RPL_WELCOME;
     } else if ( token == "002" ) { return Type::RPL_YOURHOST;
     } else if ( token == "003" ) { return Type::RPL_CREATED;
@@ -150,8 +154,8 @@ IRCEvent::Type IRCEvent::verb_to_type( const std::string& token ) const
     return Type::UNKNOWN;
 }
 
-// type mappings for string representation of types
-std::string IRCEvent::type_to_verb(Type type) const {
+// command mappings for string representation of types
+std::string IRCEventEnvelope::type_to_verb(Type type) const {
     switch (type) {
         // It's pretty stupid that C++ doesn't have a way to
         // convert enum values to strings without this.
@@ -172,6 +176,8 @@ std::string IRCEvent::type_to_verb(Type type) const {
         case Type::S_CHANNEL_MESSAGE: return "S_CHANNEL_MESSAGE";
         case Type::S_RPL_CAP_LS: return "S_RPL_CAP_LS";
         case Type::S_RPL_CAP_ACK: return "S_RPL_CAP_ACK";
+        case Type::S_RPL_CAP_NAK: return "S_RPL_CAP_NAK";
+        case Type::S_RPL_CAP_UNKNOWN: return "S_RPL_CAP_UNKNOWN";
         case Type::RPL_WELCOME: return "RPL_WELCOME";
         case Type::RPL_YOURHOST: return "RPL_YOURHOST";
         case Type::RPL_CREATED: return "RPL_CREATED";
@@ -304,5 +310,454 @@ std::string IRCEvent::type_to_verb(Type type) const {
         case Type::RPL_SASLMECHS: return "RPL_SASLMECHS";
         case Type::AUTHENTICATE: return "AUTHENTICATE";
         default: return "UNMAPPED";
+    }
+}
+
+void IRCEventEnvelope::postprocess() {
+    switch (this->type_) {
+        case Type::JOIN:
+            postprocess_JOIN();
+            break;
+        case Type::PART:
+            postprocess_PART();
+            break;
+        case Type::KICK:
+            postprocess_KICK();
+            break;
+        case Type::PRIVMSG:
+            postprocess_PRIVMSG();
+            break;
+        case Type::S_RPL_CAP:
+            postprocess_S_RPL_CAP();
+            break;
+        case Type::NOTICE:
+            postprocess_NOTICE();
+            break;
+        case Type::PING:
+            postprocess_PING();
+            break;
+        case Type::QUIT:
+            postprocess_QUIT();
+            break;
+        case Type::NICK:
+            postprocess_NICK();
+            break;
+        case Type::TOPIC:
+            postprocess_TOPIC();
+            break;
+        case Type::INVITE:
+            postprocess_INVITE();
+            break;
+        case Type::ERROR:
+            postprocess_ERROR();
+            break;
+        case Type::AUTHENTICATE:
+            postprocess_AUTHENTICATE();
+            break;
+        case Type::S_PRIVATE_MESSAGE:
+            postprocess_S_PRIVATE_MESSAGE();
+            break;
+        case Type::S_CHANNEL_MESSAGE:
+            postprocess_S_CHANNEL_MESSAGE();
+            break;
+        case Type::S_RPL_CAP_LS:
+            postprocess_S_RPL_CAP_LS();
+            break;
+        case Type::S_RPL_CAP_ACK:
+            postprocess_S_RPL_CAP_ACK();
+            break;
+        case Type::RPL_WELCOME:
+            postprocess_RPL_WELCOME();
+            break;
+        case Type::RPL_YOURHOST:
+            postprocess_RPL_YOURHOST();
+            break;
+        case Type::RPL_CREATED:
+            postprocess_RPL_CREATED();
+            break;
+        case Type::RPL_MYINFO:
+            postprocess_RPL_MYINFO();
+            break;
+        case Type::RPL_ISUPPORT:
+            postprocess_RPL_ISUPPORT();
+            break;
+        case Type::RPL_BOUNCE:
+            postprocess_RPL_BOUNCE();
+            break;
+        case Type::RPL_STATSCOMMANDS:
+            postprocess_RPL_STATSCOMMANDS();
+            break;
+        case Type::RPL_ENDOFSTATS:
+            postprocess_RPL_ENDOFSTATS();
+            break;
+        case Type::RPL_STATSUPTIME:
+            postprocess_RPL_STATSUPTIME();
+            break;
+        case Type::RPL_UMODEIS:
+            postprocess_RPL_UMODEIS();
+            break;
+        case Type::RPL_LUSERCLIENT:
+            postprocess_RPL_LUSERCLIENT();
+            break;
+        case Type::RPL_LUSEROP:
+            postprocess_RPL_LUSEROP();
+            break;
+        case Type::RPL_LUSERUNKNOWN:
+            postprocess_RPL_LUSERUNKNOWN();
+            break;
+        case Type::RPL_LUSERCHANNELS:
+            postprocess_RPL_LUSERCHANNELS();
+            break;
+        case Type::RPL_LUSERME:
+            postprocess_RPL_LUSERME();
+            break;
+        case Type::RPL_ADMINME:
+            postprocess_RPL_ADMINME();
+            break;
+        case Type::RPL_ADMINLOC1:
+            postprocess_RPL_ADMINLOC1();
+            break;
+        case Type::RPL_ADMINLOC2:
+            postprocess_RPL_ADMINLOC2();
+            break;
+        case Type::RPL_ADMINEMAIL:
+            postprocess_RPL_ADMINEMAIL();
+            break;
+        case Type::RPL_TRYAGAIN:
+            postprocess_RPL_TRYAGAIN();
+            break;
+        case Type::RPL_LOCALUSERS:
+            postprocess_RPL_LOCALUSERS();
+            break;
+        case Type::RPL_GLOBALUSERS:
+            postprocess_RPL_GLOBALUSERS();
+            break;
+        case Type::RPL_WHOISCERTFP:
+            postprocess_RPL_WHOISCERTFP();
+            break;
+        case Type::RPL_NONE:
+            postprocess_RPL_NONE();
+            break;
+        case Type::RPL_AWAY:
+            postprocess_RPL_AWAY();
+            break;
+        case Type::RPL_USERHOST:
+            postprocess_RPL_USERHOST();
+            break;
+        case Type::RPL_UNAWAY:
+            postprocess_RPL_UNAWAY();
+            break;
+        case Type::RPL_NOWAWAY:
+            postprocess_RPL_NOWAWAY();
+            break;
+        case Type::RPL_WHOREPLY:
+            postprocess_RPL_WHOREPLY();
+            break;
+        case Type::RPL_ENDOFWHO:
+            postprocess_RPL_ENDOFWHO();
+            break;
+        case Type::RPL_WHOISREGNICK:
+            postprocess_RPL_WHOISREGNICK();
+            break;
+        case Type::RPL_WHOISUSER:
+            postprocess_RPL_WHOISUSER();
+            break;
+        case Type::RPL_WHOISSERVER:
+            postprocess_RPL_WHOISSERVER();
+            break;
+        case Type::RPL_WHOISOPERATOR:
+            postprocess_RPL_WHOISOPERATOR();
+            break;
+        case Type::RPL_WHOWASUSER:
+            postprocess_RPL_WHOWASUSER();
+            break;
+        case Type::RPL_WHOISIDLE:
+            postprocess_RPL_WHOISIDLE();
+            break;
+        case Type::RPL_ENDOFWHOIS:
+            postprocess_RPL_ENDOFWHOIS();
+            break;
+        case Type::RPL_WHOISCHANNELS:
+            postprocess_RPL_WHOISCHANNELS();
+            break;
+        case Type::RPL_WHOISSPECIAL:
+            postprocess_RPL_WHOISSPECIAL();
+            break;
+        case Type::RPL_LISTSTART:
+            postprocess_RPL_LISTSTART();
+            break;
+        case Type::RPL_LIST:
+            postprocess_RPL_LIST();
+            break;
+        case Type::RPL_LISTEND:
+            postprocess_RPL_LISTEND();
+            break;
+        case Type::RPL_CHANNELMODEIS:
+            postprocess_RPL_CHANNELMODEIS();
+            break;
+        case Type::RPL_CREATIONTIME:
+            postprocess_RPL_CREATIONTIME();
+            break;
+        case Type::RPL_WHOISACCOUNT:
+            postprocess_RPL_WHOISACCOUNT();
+            break;
+        case Type::RPL_NOTOPIC:
+            postprocess_RPL_NOTOPIC();
+            break;
+        case Type::RPL_TOPIC:
+            postprocess_RPL_TOPIC();
+            break;
+        case Type::RPL_TOPICWHOTIME:
+            postprocess_RPL_TOPICWHOTIME();
+            break;
+        case Type::RPL_INVITELIST:
+            postprocess_RPL_INVITELIST();
+            break;
+        case Type::RPL_ENDOFINVITELIST:
+            postprocess_RPL_ENDOFINVITELIST();
+            break;
+        case Type::RPL_WHOISACTUALLY:
+            postprocess_RPL_WHOISACTUALLY();
+            break;
+        case Type::RPL_INVITING:
+            postprocess_RPL_INVITING();
+            break;
+        case Type::RPL_INVEXLIST:
+            postprocess_RPL_INVEXLIST();
+            break;
+        case Type::RPL_ENDOFINVEXLIST:
+            postprocess_RPL_ENDOFINVEXLIST();
+            break;
+        case Type::RPL_EXCEPTLIST:
+            postprocess_RPL_EXCEPTLIST();
+            break;
+        case Type::RPL_ENDOFEXCEPTLIST:
+            postprocess_RPL_ENDOFEXCEPTLIST();
+            break;
+        case Type::RPL_VERSION:
+            postprocess_RPL_VERSION();
+            break;
+        case Type::RPL_NAMREPLY:
+            postprocess_RPL_NAMREPLY();
+            break;
+        case Type::RPL_ENDOFNAMES:
+            postprocess_RPL_ENDOFNAMES();
+            break;
+        case Type::RPL_LINKS:
+            postprocess_RPL_LINKS();
+            break;
+        case Type::RPL_ENDOFLINKS:
+            postprocess_RPL_ENDOFLINKS();
+            break;
+        case Type::RPL_BANLIST:
+            postprocess_RPL_BANLIST();
+            break;
+        case Type::RPL_ENDOFBANLIST:
+            postprocess_RPL_ENDOFBANLIST();
+            break;
+        case Type::RPL_ENDOFWHOWAS:
+            postprocess_RPL_ENDOFWHOWAS();
+            break;
+        case Type::RPL_INFO:
+            postprocess_RPL_INFO();
+            break;
+        case Type::RPL_ENDOFINFO:
+            postprocess_RPL_ENDOFINFO();
+            break;
+        case Type::RPL_MOTDSTART:
+            postprocess_RPL_MOTDSTART();
+            break;
+        case Type::RPL_MOTD:
+            postprocess_RPL_MOTD();
+            break;
+        case Type::RPL_ENDOFMOTD:
+            postprocess_RPL_ENDOFMOTD();
+            break;
+        case Type::RPL_WHOISHOST:
+            postprocess_RPL_WHOISHOST();
+            break;
+        case Type::RPL_WHOISMODES:
+            postprocess_RPL_WHOISMODES();
+            break;
+        case Type::RPL_YOUREOPER:
+            postprocess_RPL_YOUREOPER();
+            break;
+        case Type::RPL_REHASHING:
+            postprocess_RPL_REHASHING();
+            break;
+        case Type::RPL_TIME:
+            postprocess_RPL_TIME();
+            break;
+        case Type::ERR_UNKNOWNERROR:
+            postprocess_ERR_UNKNOWNERROR();
+            break;
+        case Type::ERR_NOSUCHNICK:
+            postprocess_ERR_NOSUCHNICK();
+            break;
+        case Type::ERR_NOSUCHSERVER:
+            postprocess_ERR_NOSUCHSERVER();
+            break;
+        case Type::ERR_NOSUCHCHANNEL:
+            postprocess_ERR_NOSUCHCHANNEL();
+            break;
+        case Type::ERR_CANNOTSENDTOCHAN:
+            postprocess_ERR_CANNOTSENDTOCHAN();
+            break;
+        case Type::ERR_TOOMANYCHANNELS:
+            postprocess_ERR_TOOMANYCHANNELS();
+            break;
+        case Type::ERR_WASNOSUCHNICK:
+            postprocess_ERR_WASNOSUCHNICK();
+            break;
+        case Type::ERR_NOORIGIN:
+            postprocess_ERR_NOORIGIN();
+            break;
+        case Type::ERR_NORECIPIENT:
+            postprocess_ERR_NORECIPIENT();
+            break;
+        case Type::ERR_NOTEXTTOSEND:
+            postprocess_ERR_NOTEXTTOSEND();
+            break;
+        case Type::ERR_INPUTTOOLONG:
+            postprocess_ERR_INPUTTOOLONG();
+            break;
+        case Type::ERR_UNKNOWNCOMMAND:
+            postprocess_ERR_UNKNOWNCOMMAND();
+            break;
+        case Type::ERR_NOMOTD:
+            postprocess_ERR_NOMOTD();
+            break;
+        case Type::ERR_NONICKNAMEGIVEN:
+            postprocess_ERR_NONICKNAMEGIVEN();
+            break;
+        case Type::ERR_ERRONEUSNICKNAME:
+            postprocess_ERR_ERRONEUSNICKNAME();
+            break;
+        case Type::ERR_NICKNAMEINUSE:
+            postprocess_ERR_NICKNAMEINUSE();
+            break;
+        case Type::ERR_NICKCOLLISION:
+            postprocess_ERR_NICKCOLLISION();
+            break;
+        case Type::ERR_USERNOTINCHANNEL:
+            postprocess_ERR_USERNOTINCHANNEL();
+            break;
+        case Type::ERR_NOTONCHANNEL:
+            postprocess_ERR_NOTONCHANNEL();
+            break;
+        case Type::ERR_USERONCHANNEL:
+            postprocess_ERR_USERONCHANNEL();
+            break;
+        case Type::ERR_NOTREGISTERED:
+            postprocess_ERR_NOTREGISTERED();
+            break;
+        case Type::ERR_NEEDMOREPARAMS:
+            postprocess_ERR_NEEDMOREPARAMS();
+            break;
+        case Type::ERR_ALREADYREGISTERED:
+            postprocess_ERR_ALREADYREGISTERED();
+            break;
+        case Type::ERR_PASSWDMISMATCH:
+            postprocess_ERR_PASSWDMISMATCH();
+            break;
+        case Type::ERR_YOUREBANNEDCREEP:
+            postprocess_ERR_YOUREBANNEDCREEP();
+            break;
+        case Type::ERR_CHANNELISFULL:
+            postprocess_ERR_CHANNELISFULL();
+            break;
+        case Type::ERR_UNKNOWNMODE:
+            postprocess_ERR_UNKNOWNMODE();
+            break;
+        case Type::ERR_INVITEONLYCHAN:
+            postprocess_ERR_INVITEONLYCHAN();
+            break;
+        case Type::ERR_BANNEDFROMCHAN:
+            postprocess_ERR_BANNEDFROMCHAN();
+            break;
+        case Type::ERR_BADCHANNELKEY:
+            postprocess_ERR_BADCHANNELKEY();
+            break;
+        case Type::ERR_BADCHANMASK:
+            postprocess_ERR_BADCHANMASK();
+            break;
+        case Type::ERR_NOPRIVILEGES:
+            postprocess_ERR_NOPRIVILEGES();
+            break;
+        case Type::ERR_CHANOPRIVSNEEDED:
+            postprocess_ERR_CHANOPRIVSNEEDED();
+            break;
+        case Type::ERR_CANTKILLSERVER:
+            postprocess_ERR_CANTKILLSERVER();
+            break;
+        case Type::ERR_NOOPERHOST:
+            postprocess_ERR_NOOPERHOST();
+            break;
+        case Type::ERR_UMODEUNKNOWNFLAG:
+            postprocess_ERR_UMODEUNKNOWNFLAG();
+            break;
+        case Type::ERR_USERSDONTMATCH:
+            postprocess_ERR_USERSDONTMATCH();
+            break;
+        case Type::ERR_HELPNOTFOUND:
+            postprocess_ERR_HELPNOTFOUND();
+            break;
+        case Type::ERR_INVALIDKEY:
+            postprocess_ERR_INVALIDKEY();
+            break;
+        case Type::RPL_STARTTLS:
+            postprocess_RPL_STARTTLS();
+            break;
+        case Type::RPL_WHOISSECURE:
+            postprocess_RPL_WHOISSECURE();
+            break;
+        case Type::ERR_STARTTLS:
+            postprocess_ERR_STARTTLS();
+            break;
+        case Type::ERR_INVALIDMODEPARAM:
+            postprocess_ERR_INVALIDMODEPARAM();
+            break;
+        case Type::RPL_HELPSTART:
+            postprocess_RPL_HELPSTART();
+            break;
+        case Type::RPL_HELPTXT:
+            postprocess_RPL_HELPTXT();
+            break;
+        case Type::RPL_ENDOFHELP:
+            postprocess_RPL_ENDOFHELP();
+            break;
+        case Type::ERR_NOPRIVS:
+            postprocess_ERR_NOPRIVS();
+            break;
+        case Type::RPL_LOGGEDIN:
+            postprocess_RPL_LOGGEDIN();
+            break;
+        case Type::RPL_LOGGEDOUT:
+            postprocess_RPL_LOGGEDOUT();
+            break;
+        case Type::ERR_NICKLOCKED:
+            postprocess_ERR_NICKLOCKED();
+            break;
+        case Type::RPL_SASLSUCCESS:
+            postprocess_RPL_SASLSUCCESS();
+            break;
+        case Type::ERR_SASLFAIL:
+            postprocess_ERR_SASLFAIL();
+            break;
+        case Type::ERR_SASLTOOLONG:
+            postprocess_ERR_SASLTOOLONG();
+            break;
+        case Type::ERR_SASLABORTED:
+            postprocess_ERR_SASLABORTED();
+            break;
+        case Type::ERR_SASLALREADY:
+            postprocess_ERR_SASLALREADY();
+            break;
+        case Type::RPL_SASLMECHS:
+            postprocess_RPL_SASLMECHS();
+            break;
+        case Type::UNKNOWN:
+            postprocess_UNKNOWN();
+            break;
     }
 }

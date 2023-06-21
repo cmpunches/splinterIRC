@@ -1,39 +1,50 @@
 #include "../client/client.h"
 
+void splinterClient::report_event( IRCEventEnvelope& event )
+{
+    bool pretty_print = true;
+    int indent = 4;
+    bool debug = true;
+
+    std::cout << event.to_json( pretty_print, indent, debug ) << std::endl;
+}
+
 //handlers
+
 // TODO: this should be reworked as not every CAP message is going to be SASL related
 //      and not every CAP ACK message is going to be SASL related
-void splinterClient::handle_S_RPL_CAP( const IRCEvent& event )
+void splinterClient::handle_S_RPL_CAP( IRCEventEnvelope& event )
 {
     handle_UNKNOWN(event);
 }
 
 // TODO: this should be reworked as not every CAP LS message is going to be SASL related
 //      and not every CAP ACK message is going to be SASL related
-void splinterClient::handle_S_RPL_CAP_LS( const IRCEvent& event )
+void splinterClient::handle_S_RPL_CAP_LS( IRCEventEnvelope& event )
 {
+    // TODO: add client state tracking for SASL authentication instead of just mindlessly replying to CAP LS
+
     report_event(event);
 
     if ( use_sasl_ )
     {
         // Check if the server supports SASL
-        if (event.message().find("sasl") != std::string::npos)
+        std::vector<std::string> capabilities = event.get_array_attribute("server_capabilities");
+        for (const std::string& capability: capabilities)
         {
-            // Send CAP REQ command to request SASL capability
-            send("CAP REQ :sasl\r\n");
-        } else {
-            std::cerr << "Received an unprocessed CAP LS message.  Report this message as a parsing bug." << std::endl;
-            critical_thread_failed = true;
+            if (capability  == "sasl" ) {
+                send("CAP REQ :sasl\r\n");
+            }
         }
     }
 }
-// TODO: this should be reworked as not every CAP ACK message is going to be SASL related
-void splinterClient::handle_S_RPL_CAP_ACK( const IRCEvent& event )
-{
+// TODO: this should be reworked as not every CAP ACK message is going to be SASL related -- related to state tracking
+void splinterClient::handle_S_RPL_CAP_ACK( IRCEventEnvelope& event ) {
     report_event(event);
 
-    // is the capability response signifying SASL?
-    if ( ( event.message().find("ACK sasl") != std::string::npos) and ( event.target() == "*" ) )
+    std::string capability = event.get_scalar_attribute("ack_capability");
+
+    if ( capability == "sasl" )
     {
         // Send AUTHENTICATE command to initiate SASL authentication
         send("AUTHENTICATE PLAIN\r\n");
@@ -79,7 +90,7 @@ std::string base64_encode(const std::string& s)
     return ret;
 }
 
-void splinterClient::handle_AUTHENTICATE( const IRCEvent& event )
+void splinterClient::handle_AUTHENTICATE( IRCEventEnvelope& event )
 {
     report_event(event);
 
@@ -88,12 +99,12 @@ void splinterClient::handle_AUTHENTICATE( const IRCEvent& event )
     send("AUTHENTICATE " + base64_encode(auth) + "\r\n");
 }
 
-void splinterClient::handle_RPL_SASLSUCCESS( const IRCEvent& event )
+void splinterClient::handle_RPL_SASLSUCCESS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LOGGEDIN( const IRCEvent& event )
+void splinterClient::handle_RPL_LOGGEDIN( IRCEventEnvelope& event )
 {
     report_event(event);
 
@@ -106,96 +117,91 @@ void splinterClient::handle_RPL_LOGGEDIN( const IRCEvent& event )
     set_user( nick_ );
 }
 
-void splinterClient::handle_ERR_SASLFAIL( const IRCEvent& event )
+void splinterClient::handle_ERR_SASLFAIL( IRCEventEnvelope& event )
 {
     report_event(event);
     // SASL authentication failed
-    std::cerr << "SASL AUTH FAILED." << std::endl;
     critical_thread_failed = true;
 }
 
-void splinterClient::handle_ERR_SASLTOOLONG( const IRCEvent& event )
+void splinterClient::handle_ERR_SASLTOOLONG( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_SASLABORTED( const IRCEvent& event )
+void splinterClient::handle_ERR_SASLABORTED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_SASLALREADY( const IRCEvent& event )
+void splinterClient::handle_ERR_SASLALREADY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_SASLMECHS( const IRCEvent& event )
+void splinterClient::handle_RPL_SASLMECHS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_unassociated_event( const IRCEvent& event )
+void splinterClient::handle_unassociated_event( IRCEventEnvelope& event )
 {
-    std::cerr << "Received a type without a handler associated.  Report this message as a bug." << std::endl;
+    std::cerr << "Received a command without a handler associated.  Report this message as a bug." << std::endl;
     std::cerr << event.to_json() << std::endl;
 }
 
-void splinterClient::handle_UNKNOWN( const IRCEvent& event )
+void splinterClient::handle_UNKNOWN( IRCEventEnvelope& event )
 {
-    std::cerr << "Unknown message type: ";
-    std::cerr << event.to_json() << std::endl;
+    std::cerr << "Unknown message command handled: ";
+    std::cerr << event.to_json(1, 4, 1) << std::endl;
 }
 
-void splinterClient::report_event( const IRCEvent& event )
-{
-    std::cout << event.to_json();
-}
-
-void splinterClient::handle_S_CHANNEL_MESSAGE(const IRCEvent& event)
+void splinterClient::handle_S_CHANNEL_MESSAGE(IRCEventEnvelope& event)
 {
     report_event(event);
     handle_ctcp( event );
     handle_command( event );
 }
 
-void splinterClient::handle_S_PRIVATE_MESSAGE(const IRCEvent &event)
+void splinterClient::handle_S_PRIVATE_MESSAGE(IRCEventEnvelope &event)
 {
     report_event(event);
     handle_ctcp( event );
     handle_command( event );
 }
 
-void splinterClient::handle_ctcp_version(const IRCEvent& event)
+void splinterClient::handle_ctcp_version(IRCEventEnvelope& event)
 {
-    std::string target = event.nick();
+    std::string target = event.get_scalar_attribute("sender");
     std::string message = "NOTICE " + target + " :\x01VERSION splinterIRC\x01\r\n";
     send(message);
 }
 
-void splinterClient::handle_ctcp_time( const IRCEvent& event )
+void splinterClient::handle_ctcp_time( IRCEventEnvelope& event )
 {
-    std::string target = event.nick();
+    std::string target = event.get_scalar_attribute("sender");
     std::string message = "NOTICE " + target + " :\x01TIME " + std::to_string(std::time(nullptr)) + "\x01\r\n";
     send(message);
 }
 
-void splinterClient::handle_ctcp_ping(const IRCEvent& event)
+void splinterClient::handle_ctcp_ping(IRCEventEnvelope& event)
 {
-    std::string target = event.nick();
-    std::string ctcp_args = event.message().substr(6, event.message().size() - 7);
-    std::string message = "NOTICE " + target + " :\x01PING " + ctcp_args + "\x01\r\n";
+    std::string target = event.get_scalar_attribute("sender");
+    std::string message = event.get_scalar_attribute("message");
+    std::string ctcp_args = message.substr(6, message.size() - 7);
+    message = "NOTICE " + target + " :\x01PING " + ctcp_args + "\x01\r\n";
     send(message);
 }
 
-void splinterClient::handle_ctcp( const IRCEvent& event )
+void splinterClient::handle_ctcp( IRCEventEnvelope& event )
 {
-    std::string message_ = event.message();
+    std::string message = event.get_scalar_attribute("message");
 
     // Check if the message is a CTCP message
-    if (message_.front() == '\x01' && message_.back() == '\x01')
+    if (message.front() == '\x01' && message.back() == '\x01')
     {
         // Extract the CTCP command and its arguments
-        std::string ctcp_message = message_.substr(1, message_.size() - 2);
+        std::string ctcp_message = message.substr(1, message.size() - 2);
         std::string ctcp_command;
         std::string ctcp_args;
         std::istringstream ctcp_ss(ctcp_message);
@@ -204,7 +210,6 @@ void splinterClient::handle_ctcp( const IRCEvent& event )
             std::getline(ctcp_ss, ctcp_args);
             // Handle the CTCP command
             if (ctcp_command == "VERSION") {
-                std::cerr << "VERSION CTCP REQUESTED" << std::endl;
                 handle_ctcp_version( event );
             } else if (ctcp_command == "TIME") {
                 handle_ctcp_time( event );
@@ -215,670 +220,671 @@ void splinterClient::handle_ctcp( const IRCEvent& event )
     }
 }
 
-void splinterClient::handle_JOIN( const IRCEvent& event )
+void splinterClient::handle_PING( IRCEventEnvelope& event )
 {
     report_event(event);
-}
 
-void splinterClient::handle_PART( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_KICK( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_NOTICE( const IRCEvent& event )
-{
-    report_event(event);
-}
-
-void splinterClient::handle_PING( const IRCEvent& event )
-{
-    report_event(event);
-    std::string target = event.target();
+    std::string target = event.get_scalar_attribute( "target" );
     send("PONG " + target + "\r\n");
 }
 
-void splinterClient::handle_QUIT( const IRCEvent& event )
+void splinterClient::handle_QUIT( IRCEventEnvelope& event )
 {
     report_event(event);
     critical_thread_failed = true;
 }
 
-void splinterClient::handle_NICK( const IRCEvent& event )
+void splinterClient::handle_JOIN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_TOPIC( const IRCEvent& event )
+void splinterClient::handle_PART( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_INVITE( const IRCEvent& event )
+void splinterClient::handle_KICK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERROR( const IRCEvent& event )
+void splinterClient::handle_NOTICE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WELCOME( const IRCEvent& event )
+void splinterClient::handle_NICK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_YOURHOST( const IRCEvent& event )
+void splinterClient::handle_TOPIC( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_CREATED( const IRCEvent& event )
+void splinterClient::handle_INVITE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_MYINFO( const IRCEvent& event )
+void splinterClient::handle_ERROR( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ISUPPORT( const IRCEvent& event )
+void splinterClient::handle_RPL_WELCOME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_BOUNCE( const IRCEvent& event )
+void splinterClient::handle_RPL_YOURHOST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_STATSCOMMANDS( const IRCEvent& event )
+void splinterClient::handle_RPL_CREATED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFSTATS( const IRCEvent& event )
+void splinterClient::handle_RPL_MYINFO( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_STATSUPTIME( const IRCEvent& event )
+void splinterClient::handle_RPL_ISUPPORT( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_UMODEIS( const IRCEvent& event )
+void splinterClient::handle_RPL_BOUNCE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LUSERCLIENT( const IRCEvent& event )
+void splinterClient::handle_RPL_STATSCOMMANDS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LUSEROP( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFSTATS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LUSERUNKNOWN( const IRCEvent& event )
+void splinterClient::handle_RPL_STATSUPTIME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LUSERCHANNELS( const IRCEvent& event )
+void splinterClient::handle_RPL_UMODEIS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LUSERME( const IRCEvent& event )
+void splinterClient::handle_RPL_LUSERCLIENT( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ADMINME( const IRCEvent& event )
+void splinterClient::handle_RPL_LUSEROP( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ADMINLOC1( const IRCEvent& event )
+void splinterClient::handle_RPL_LUSERUNKNOWN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ADMINLOC2( const IRCEvent& event )
+void splinterClient::handle_RPL_LUSERCHANNELS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ADMINEMAIL( const IRCEvent& event )
+void splinterClient::handle_RPL_LUSERME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_TRYAGAIN( const IRCEvent& event )
+void splinterClient::handle_RPL_ADMINME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LOCALUSERS( const IRCEvent& event )
+void splinterClient::handle_RPL_ADMINLOC1( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_GLOBALUSERS( const IRCEvent& event )
+void splinterClient::handle_RPL_ADMINLOC2( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISCERTFP( const IRCEvent& event )
+void splinterClient::handle_RPL_ADMINEMAIL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_NONE( const IRCEvent& event )
+void splinterClient::handle_RPL_TRYAGAIN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_AWAY( const IRCEvent& event )
+void splinterClient::handle_RPL_LOCALUSERS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_USERHOST( const IRCEvent& event )
+void splinterClient::handle_RPL_GLOBALUSERS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_UNAWAY( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISCERTFP( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_NOWAWAY( const IRCEvent& event )
+void splinterClient::handle_RPL_NONE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOREPLY( const IRCEvent& event )
+void splinterClient::handle_RPL_AWAY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFWHO( const IRCEvent& event )
+void splinterClient::handle_RPL_USERHOST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISREGNICK( const IRCEvent& event )
+void splinterClient::handle_RPL_UNAWAY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISUSER( const IRCEvent& event )
+void splinterClient::handle_RPL_NOWAWAY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISSERVER( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOREPLY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISOPERATOR( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFWHO( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOWASUSER( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISREGNICK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISIDLE( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISUSER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFWHOIS( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISSERVER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISCHANNELS( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISOPERATOR( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISSPECIAL( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOWASUSER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LISTSTART( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISIDLE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LIST( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFWHOIS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LISTEND( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISCHANNELS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_CHANNELMODEIS( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISSPECIAL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_CREATIONTIME( const IRCEvent& event )
+void splinterClient::handle_RPL_LISTSTART( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISACCOUNT( const IRCEvent& event )
+void splinterClient::handle_RPL_LIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_NOTOPIC( const IRCEvent& event )
+void splinterClient::handle_RPL_LISTEND( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_TOPIC( const IRCEvent& event )
+void splinterClient::handle_RPL_CHANNELMODEIS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_TOPICWHOTIME( const IRCEvent& event )
+void splinterClient::handle_RPL_CREATIONTIME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_INVITELIST( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISACCOUNT( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFINVITELIST( const IRCEvent& event )
+void splinterClient::handle_RPL_NOTOPIC( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISACTUALLY( const IRCEvent& event )
+void splinterClient::handle_RPL_TOPIC( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_INVITING( const IRCEvent& event )
+void splinterClient::handle_RPL_TOPICWHOTIME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_INVEXLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_INVITELIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFINVEXLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFINVITELIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_EXCEPTLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISACTUALLY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFEXCEPTLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_INVITING( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_VERSION( const IRCEvent& event )
+void splinterClient::handle_RPL_INVEXLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_NAMREPLY( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFINVEXLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFNAMES( const IRCEvent& event )
+void splinterClient::handle_RPL_EXCEPTLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LINKS( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFEXCEPTLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFLINKS( const IRCEvent& event )
+void splinterClient::handle_RPL_VERSION( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_BANLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_NAMREPLY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFBANLIST( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFNAMES( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFWHOWAS( const IRCEvent& event )
+void splinterClient::handle_RPL_LINKS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_INFO( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFLINKS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFINFO( const IRCEvent& event )
+void splinterClient::handle_RPL_BANLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_MOTDSTART( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFBANLIST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_MOTD( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFWHOWAS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFMOTD( const IRCEvent& event )
+void splinterClient::handle_RPL_INFO( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISHOST( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFINFO( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISMODES( const IRCEvent& event )
+void splinterClient::handle_RPL_MOTDSTART( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_YOUREOPER( const IRCEvent& event )
+void splinterClient::handle_RPL_MOTD( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_REHASHING( const IRCEvent& event )
+void splinterClient::handle_RPL_ENDOFMOTD( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_TIME( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISHOST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_UNKNOWNERROR( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISMODES( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOSUCHNICK( const IRCEvent& event )
+void splinterClient::handle_RPL_YOUREOPER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOSUCHSERVER( const IRCEvent& event )
+void splinterClient::handle_RPL_REHASHING( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOSUCHCHANNEL( const IRCEvent& event )
+void splinterClient::handle_RPL_TIME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_CANNOTSENDTOCHAN( const IRCEvent& event )
+void splinterClient::handle_ERR_UNKNOWNERROR( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_TOOMANYCHANNELS( const IRCEvent& event )
+void splinterClient::handle_ERR_NOSUCHNICK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_WASNOSUCHNICK( const IRCEvent& event )
+void splinterClient::handle_ERR_NOSUCHSERVER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOORIGIN( const IRCEvent& event )
+void splinterClient::handle_ERR_NOSUCHCHANNEL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NORECIPIENT( const IRCEvent& event )
+void splinterClient::handle_ERR_CANNOTSENDTOCHAN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOTEXTTOSEND( const IRCEvent& event )
+void splinterClient::handle_ERR_TOOMANYCHANNELS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_INPUTTOOLONG( const IRCEvent& event )
+void splinterClient::handle_ERR_WASNOSUCHNICK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_UNKNOWNCOMMAND( const IRCEvent& event )
+void splinterClient::handle_ERR_NOORIGIN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOMOTD( const IRCEvent& event )
+void splinterClient::handle_ERR_NORECIPIENT( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NONICKNAMEGIVEN( const IRCEvent& event )
+void splinterClient::handle_ERR_NOTEXTTOSEND( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_ERRONEUSNICKNAME( const IRCEvent& event )
+void splinterClient::handle_ERR_INPUTTOOLONG( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NICKNAMEINUSE( const IRCEvent& event )
+void splinterClient::handle_ERR_UNKNOWNCOMMAND( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NICKCOLLISION( const IRCEvent& event )
+void splinterClient::handle_ERR_NOMOTD( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_USERNOTINCHANNEL( const IRCEvent& event )
+void splinterClient::handle_ERR_NONICKNAMEGIVEN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOTONCHANNEL( const IRCEvent& event )
+void splinterClient::handle_ERR_ERRONEUSNICKNAME( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_USERONCHANNEL( const IRCEvent& event )
+void splinterClient::handle_ERR_NICKNAMEINUSE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOTREGISTERED( const IRCEvent& event )
+void splinterClient::handle_ERR_NICKCOLLISION( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NEEDMOREPARAMS( const IRCEvent& event )
+void splinterClient::handle_ERR_USERNOTINCHANNEL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_ALREADYREGISTERED( const IRCEvent& event )
+void splinterClient::handle_ERR_NOTONCHANNEL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_PASSWDMISMATCH( const IRCEvent& event )
+void splinterClient::handle_ERR_USERONCHANNEL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_YOUREBANNEDCREEP( const IRCEvent& event )
+void splinterClient::handle_ERR_NOTREGISTERED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_CHANNELISFULL( const IRCEvent& event )
+void splinterClient::handle_ERR_NEEDMOREPARAMS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_UNKNOWNMODE( const IRCEvent& event )
+void splinterClient::handle_ERR_ALREADYREGISTERED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_INVITEONLYCHAN( const IRCEvent& event )
+void splinterClient::handle_ERR_PASSWDMISMATCH( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_BANNEDFROMCHAN( const IRCEvent& event )
+void splinterClient::handle_ERR_YOUREBANNEDCREEP( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_BADCHANNELKEY( const IRCEvent& event )
+void splinterClient::handle_ERR_CHANNELISFULL( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_BADCHANMASK( const IRCEvent& event )
+void splinterClient::handle_ERR_UNKNOWNMODE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOPRIVILEGES( const IRCEvent& event )
+void splinterClient::handle_ERR_INVITEONLYCHAN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_CHANOPRIVSNEEDED( const IRCEvent& event )
+void splinterClient::handle_ERR_BANNEDFROMCHAN( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_CANTKILLSERVER( const IRCEvent& event )
+void splinterClient::handle_ERR_BADCHANNELKEY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOOPERHOST( const IRCEvent& event )
+void splinterClient::handle_ERR_BADCHANMASK( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_UMODEUNKNOWNFLAG( const IRCEvent& event )
+void splinterClient::handle_ERR_NOPRIVILEGES( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_USERSDONTMATCH( const IRCEvent& event )
+void splinterClient::handle_ERR_CHANOPRIVSNEEDED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_HELPNOTFOUND( const IRCEvent& event )
+void splinterClient::handle_ERR_CANTKILLSERVER( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_INVALIDKEY( const IRCEvent& event )
+void splinterClient::handle_ERR_NOOPERHOST( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_STARTTLS( const IRCEvent& event )
+void splinterClient::handle_ERR_UMODEUNKNOWNFLAG( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_WHOISSECURE( const IRCEvent& event )
+void splinterClient::handle_ERR_USERSDONTMATCH( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_STARTTLS( const IRCEvent& event )
+void splinterClient::handle_ERR_HELPNOTFOUND( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_INVALIDMODEPARAM( const IRCEvent& event )
+void splinterClient::handle_ERR_INVALIDKEY( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_HELPSTART( const IRCEvent& event )
+void splinterClient::handle_RPL_STARTTLS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_HELPTXT( const IRCEvent& event )
+void splinterClient::handle_RPL_WHOISSECURE( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_ENDOFHELP( const IRCEvent& event )
+void splinterClient::handle_ERR_STARTTLS( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NOPRIVS( const IRCEvent& event )
+void splinterClient::handle_ERR_INVALIDMODEPARAM( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_RPL_LOGGEDOUT( const IRCEvent& event )
+void splinterClient::handle_RPL_HELPSTART( IRCEventEnvelope& event )
 {
     report_event(event);
 }
 
-void splinterClient::handle_ERR_NICKLOCKED( const IRCEvent& event )
+void splinterClient::handle_RPL_HELPTXT( IRCEventEnvelope& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_RPL_ENDOFHELP( IRCEventEnvelope& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_ERR_NOPRIVS( IRCEventEnvelope& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_RPL_LOGGEDOUT( IRCEventEnvelope& event )
+{
+    report_event(event);
+}
+
+void splinterClient::handle_ERR_NICKLOCKED( IRCEventEnvelope& event )
 {
     report_event(event);
 }
