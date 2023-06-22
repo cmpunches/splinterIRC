@@ -14,7 +14,7 @@ IRCEventEnvelope::Type IRCEventEnvelope::verb_to_type(const std::string& token )
     } else if (token == "TOPIC" ) { return Type::TOPIC;
     } else if (token == "INVITE" ) { return Type::INVITE;
     } else if (token == "ERROR" ) { return Type::ERROR;
-    } else if (token == "CAP" ) { return Type::S_RPL_CAP;
+    } else if (token == "CAP" ) { return Type::RPL_CAP;
     } else if (token == "S_RPL_CAP_LS" ) { return Type::S_RPL_CAP_LS;
     } else if (token == "S_RPL_CAP_ACK" ) { return Type::S_RPL_CAP_ACK;
     } else if (token == "S_RPL_CAP_UNKNOWN" ) { return Type::S_RPL_CAP_UNKNOWN;
@@ -164,7 +164,7 @@ std::string IRCEventEnvelope::type_to_verb(Type type) const {
         case Type::PART: return "PART";
         case Type::KICK: return "KICK";
         case Type::PRIVMSG: return "PRIVMSG";
-        case Type::S_RPL_CAP: return "S_RPL_CAP";
+        case Type::RPL_CAP: return "RPL_CAP";
         case Type::NOTICE: return "NOTICE";
         case Type::PING: return "PING";
         case Type::QUIT: return "QUIT";
@@ -327,7 +327,7 @@ void IRCEventEnvelope::postprocess() {
         case Type::PRIVMSG:
             postprocess_PRIVMSG();
             break;
-        case Type::S_RPL_CAP:
+        case Type::RPL_CAP:
             postprocess_S_RPL_CAP();
             break;
         case Type::NOTICE:

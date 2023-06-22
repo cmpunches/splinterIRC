@@ -57,7 +57,7 @@ void IRCEventEnvelope::postprocess_S_RPL_CAP_UNKNOWN()
 {
     // let the event handler handle these for now but this will allow us to handle them in the future at parsing
     // in case we want to do something with them to prep them for better handling
-    // std::cerr << "unknown S_RPL_CAP subcommand found" << std::endl;
+    // std::cerr << "unknown RPL_CAP subcommand found" << std::endl;
 }
 
 void IRCEventEnvelope::postprocess_UNKNOWN()
@@ -122,53 +122,313 @@ void IRCEventEnvelope::postprocess_PING()
 }
 
 void IRCEventEnvelope::postprocess_S_PRIVATE_MESSAGE()
-{
-
-}
+{}
 
 void IRCEventEnvelope::postprocess_S_CHANNEL_MESSAGE()
-{
-
-}
+{}
 
 void IRCEventEnvelope::postprocess_JOIN()
-{}
+{
+    std::string channel = autoextract_params[0];
+    set_attribute( "channel", channel );
+    set_attribute("_postprocessed", "true");
+}
 
-void IRCEventEnvelope::postprocess_PART()
-{}
+void IRCEventEnvelope::postprocess_RPL_LOGGEDIN()
+{
+    set_attribute( "account", autoextract_params[2] );
+    set_attribute( "_postprocessed", "true" );
+}
 
-void IRCEventEnvelope::postprocess_KICK()
-{}
-
-void IRCEventEnvelope::postprocess_QUIT()
-{}
-
-void IRCEventEnvelope::postprocess_NICK()
-{}
-
-void IRCEventEnvelope::postprocess_TOPIC()
-{}
-
-void IRCEventEnvelope::postprocess_INVITE()
-{}
 
 void IRCEventEnvelope::postprocess_AUTHENTICATE()
-{}
+{
+    std::string message = autoextract_params[0];
+    set_attribute("message", message);
+    set_attribute("sender", get_scalar_attribute( "_prefix" ) );
+    set_attribute( "_postprocessed", "true" );
+}
+
+void IRCEventEnvelope::postprocess_RPL_TOPIC()
+{
+    std::string channel = autoextract_params[1];
+    set_attribute( "channel", channel );
+
+    std::string topic = autoextract_params[2];
+    set_attribute( "topic", topic );
+
+    std::string source = get_scalar_attribute( "server" );
+    set_attribute( "source", source );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_RPL_TOPICWHOTIME()
+{
+    std::string channel = autoextract_params[1];
+    set_attribute( "channel", channel );
+
+    std::string source = get_scalar_attribute( "server" );
+    set_attribute( "source", source );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    std::string set_by = autoextract_params[2];
+    set_attribute( "set_by", set_by );
+
+    std::string set_by_nick = split( set_by, '!' )[0];
+    set_attribute( "set_by_nick", set_by_nick );
+
+    std::string set_by_ident = split( split( set_by, '!' )[1], '@' )[0];
+    set_attribute( "set_by_ident", set_by_ident );
+
+    std::string set_by_host = split( split( set_by, '!' )[1], '@' )[1];
+    set_attribute( "set_by_host", set_by_host );
+
+    std::string time = autoextract_params[3];
+    set_attribute( "time", time );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_RPL_NAMREPLY()
+{
+    std::string channel = autoextract_params[2];
+    set_attribute( "channel", channel );
+
+    set_attribute( "channel_members", split(autoextract_params[3], ' ') );
+}
+
+void IRCEventEnvelope::postprocess_ERR_CANNOTSENDTOCHAN()
+{
+    std::string channel = autoextract_params[1];
+    std::string sender = get_scalar_attribute("server");
+    std::string message = autoextract_params[2];
+    std::string nick = autoextract_params[0];
+
+    set_attribute("channel", channel);
+    set_attribute("sender", sender);
+    set_attribute("message", message);
+    set_attribute("nick", nick);
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_RPL_SASLSUCCESS()
+{
+    std::string message = autoextract_params[1];
+    std::string sender = get_scalar_attribute("server");
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_PART()
+{
+    std::string channel = autoextract_params[0];
+    set_attribute( "channel", channel );
+
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string nick = split( sender, '!' )[0];
+    set_attribute( "nick", nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_KICK()
+{
+    std::string channel = autoextract_params[0];
+    set_attribute( "channel", channel );
+
+    std::string target = autoextract_params[1];
+    set_attribute( "target", target );
+
+    std::string message = autoextract_params[2];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string nick = split( sender, '!' )[0];
+    set_attribute( "nick", nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_QUIT()
+{
+    std::string message = autoextract_params[0];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string nick = split( sender, '!' )[0];
+    set_attribute( "nick", nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_NICK()
+{
+    std::string new_nick = autoextract_params[0];
+    set_attribute( "new_nick", new_nick );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string old_nick = split(sender, '!' )[0];
+    set_attribute("old_nick", old_nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_TOPIC()
+{
+    std::string channel = autoextract_params[0];
+    set_attribute( "channel", channel );
+
+    std::string topic = autoextract_params[1];
+    set_attribute( "topic", topic );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string nick = split( sender, '!' )[0];
+    set_attribute( "nick", nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
+
+void IRCEventEnvelope::postprocess_INVITE()
+{
+    std::string channel = autoextract_params[1];
+    set_attribute( "channel", channel );
+
+    std::string sender = get_scalar_attribute( "_prefix" );
+    set_attribute( "sender", sender );
+
+    std::string nick = split( sender, '!' )[0];
+    set_attribute( "nick", nick );
+
+    std::string ident = split( split( sender, '!' )[1], '@' )[0];
+    set_attribute( "ident", ident );
+
+    std::string host = split( split( sender, '!' )[1], '@' )[1];
+    set_attribute( "host", host );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_WELCOME()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = get_scalar_attribute( "nick" );
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_YOURHOST()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_CREATED()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_MYINFO()
-{}
+{
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    std::string servername = autoextract_params[1];
+    set_attribute("servername", servername );
+
+    std::string version = autoextract_params[2];
+    set_attribute("version", version );
+
+    std::string available_umodes = autoextract_params[3];
+    set_attribute("available_umodes", available_umodes );
+
+    std::string available_cmodes = autoextract_params[4];
+    set_attribute("available_cmodes", available_cmodes );
+
+    std::string available_cmodes_with_params = autoextract_params[5];
+    set_attribute("available_cmodes_with_params", available_cmodes_with_params );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_ISUPPORT()
-{}
+{
+    // https://dd.ircdocs.horse/refs/numerics/005.html
+}
 
 void IRCEventEnvelope::postprocess_RPL_BOUNCE()
 {}
@@ -293,12 +553,6 @@ void IRCEventEnvelope::postprocess_RPL_WHOISACCOUNT()
 void IRCEventEnvelope::postprocess_RPL_NOTOPIC()
 {}
 
-void IRCEventEnvelope::postprocess_RPL_TOPIC()
-{}
-
-void IRCEventEnvelope::postprocess_RPL_TOPICWHOTIME()
-{}
-
 void IRCEventEnvelope::postprocess_RPL_INVITELIST()
 {}
 
@@ -324,9 +578,6 @@ void IRCEventEnvelope::postprocess_RPL_ENDOFEXCEPTLIST()
 {}
 
 void IRCEventEnvelope::postprocess_RPL_VERSION()
-{}
-
-void IRCEventEnvelope::postprocess_RPL_NAMREPLY()
 {}
 
 void IRCEventEnvelope::postprocess_RPL_ENDOFNAMES()
@@ -387,9 +638,6 @@ void IRCEventEnvelope::postprocess_ERR_NOSUCHSERVER()
 {}
 
 void IRCEventEnvelope::postprocess_ERR_NOSUCHCHANNEL()
-{}
-
-void IRCEventEnvelope::postprocess_ERR_CANNOTSENDTOCHAN()
 {}
 
 void IRCEventEnvelope::postprocess_ERR_TOOMANYCHANNELS()
@@ -518,16 +766,10 @@ void IRCEventEnvelope::postprocess_RPL_ENDOFHELP()
 void IRCEventEnvelope::postprocess_ERR_NOPRIVS()
 {}
 
-void IRCEventEnvelope::postprocess_RPL_LOGGEDIN()
-{}
-
 void IRCEventEnvelope::postprocess_RPL_LOGGEDOUT()
 {}
 
 void IRCEventEnvelope::postprocess_ERR_NICKLOCKED()
-{}
-
-void IRCEventEnvelope::postprocess_RPL_SASLSUCCESS()
 {}
 
 void IRCEventEnvelope::postprocess_ERR_SASLFAIL()

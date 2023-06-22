@@ -578,7 +578,7 @@ void splinterClient::decision_loop(IRCEventEnvelope& event)
             handle_RPL_SASLMECHS(event);
             break;
 
-        case IRCEventEnvelope::Type::S_RPL_CAP:
+        case IRCEventEnvelope::Type::RPL_CAP:
             // this will never happen if the parser is doing its job
             // so treat it like a parser error
             handle_S_RPL_CAP(event);

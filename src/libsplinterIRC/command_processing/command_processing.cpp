@@ -84,10 +84,8 @@ void splinterClient::handle_command( IRCEventEnvelope& event )
         }
     }
 
-    std::cerr << "command: " << command << std::endl;
     if (command.find("join") == 0)
     {
-        std::cout << "join command" << std::endl;
         // Parse the command arguments
         std::istringstream ss(command);
         std::string token;

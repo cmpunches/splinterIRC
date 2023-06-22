@@ -301,7 +301,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         };
 
         // initial state is disconnected
-        int state_ = State::CLIENT_CONNECTED;
+        int state_ = State::CLIENT_DISCONNECTED;
 };
 
 

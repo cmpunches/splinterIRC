@@ -16,10 +16,10 @@ class IRCEventEnvelope {
             JOIN,
             PART,
             KICK,
-            // use generic PRIVMSG then use a synthetic command during processing
+            // use generic PRIVMSG then use a synthetic type during processing
             PRIVMSG,
-            // use a generic S_RPL_CAP then use a synthetic command during processing
-            S_RPL_CAP,
+            // use a generic RPL_CAP then use a synthetic type during processing
+            RPL_CAP,
             NOTICE,
             PING,
             QUIT,
