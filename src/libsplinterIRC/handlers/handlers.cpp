@@ -4,9 +4,8 @@ void splinterClient::report_event( IRCEventEnvelope& event )
 {
     bool pretty_print = true;
     int indent = 4;
-    bool debug = true;
 
-    std::cout << event.to_json( pretty_print, indent, debug ) << std::endl;
+    std::cout << event.to_json( pretty_print, indent, verbose_ ) << std::endl;
 }
 
 //handlers
@@ -33,7 +32,7 @@ void splinterClient::handle_S_RPL_CAP_LS( IRCEventEnvelope& event )
         for (const std::string& capability: capabilities)
         {
             if (capability  == "sasl" ) {
-                send("CAP REQ :sasl\r\n");
+                request_sasl_capability();
             }
         }
     }
@@ -47,7 +46,7 @@ void splinterClient::handle_S_RPL_CAP_ACK( IRCEventEnvelope& event ) {
     if ( capability == "sasl" )
     {
         // Send AUTHENTICATE command to initiate SASL authentication
-        send("AUTHENTICATE PLAIN\r\n");
+        send("AUTHENTICATE PLAIN");
     } else {
         std::cerr << "Received an unprocessed CAP ACK message.  Report this message as a parsing bug." << std::endl;
         critical_thread_failed = true;
@@ -96,7 +95,7 @@ void splinterClient::handle_AUTHENTICATE( IRCEventEnvelope& event )
 
     // Send AUTHENTICATE command with base64-encoded credentials
     std::string auth = sasl_username_ + '\0' + sasl_username_ + '\0' + sasl_password_;
-    send("AUTHENTICATE " + base64_encode(auth) + "\r\n");
+    send("AUTHENTICATE " + base64_encode(auth));
 }
 
 void splinterClient::handle_RPL_SASLSUCCESS( IRCEventEnvelope& event )
@@ -111,7 +110,7 @@ void splinterClient::handle_RPL_LOGGEDIN( IRCEventEnvelope& event )
     // SASL authentication successful
 
     // Send CAP END command to end capability negotiation
-    send("CAP END\r\n");
+    end_capabilites_negotiation();
 
     set_nick( nick_ );
     set_user( nick_ );
@@ -173,14 +172,14 @@ void splinterClient::handle_S_PRIVATE_MESSAGE(IRCEventEnvelope &event)
 void splinterClient::handle_ctcp_version(IRCEventEnvelope& event)
 {
     std::string target = event.get_scalar_attribute("sender");
-    std::string message = "NOTICE " + target + " :\x01VERSION splinterIRC\x01\r\n";
+    std::string message = "NOTICE " + target + " :\x01VERSION splinterIRC\x01";
     send(message);
 }
 
 void splinterClient::handle_ctcp_time( IRCEventEnvelope& event )
 {
     std::string target = event.get_scalar_attribute("sender");
-    std::string message = "NOTICE " + target + " :\x01TIME " + std::to_string(std::time(nullptr)) + "\x01\r\n";
+    std::string message = "NOTICE " + target + " :\x01TIME " + std::to_string(std::time(nullptr)) + "\x01";
     send(message);
 }
 
@@ -189,7 +188,7 @@ void splinterClient::handle_ctcp_ping(IRCEventEnvelope& event)
     std::string target = event.get_scalar_attribute("sender");
     std::string message = event.get_scalar_attribute("message");
     std::string ctcp_args = message.substr(6, message.size() - 7);
-    message = "NOTICE " + target + " :\x01PING " + ctcp_args + "\x01\r\n";
+    message = "NOTICE " + target + " :\x01PING " + ctcp_args + "\x01";
     send(message);
 }
 
@@ -225,7 +224,7 @@ void splinterClient::handle_PING( IRCEventEnvelope& event )
     report_event(event);
 
     std::string target = event.get_scalar_attribute( "target" );
-    send("PONG " + target + "\r\n");
+    send_ping_reply( target );
 }
 
 void splinterClient::handle_QUIT( IRCEventEnvelope& event )

@@ -600,9 +600,4 @@ void splinterClient::decision_loop(IRCEventEnvelope& event)
             handle_unassociated_event(event);
             break;
     }
-
-    if (verbose_)
-    {
-        std::cout << "Event: " << event.to_json() << std::endl;
-    }
 }

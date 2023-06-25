@@ -2,6 +2,9 @@
 
 void splinterClient::handle_command( IRCEventEnvelope& event )
 {
+    // TODO rework this to authenticate as a command to start a session linked with username
+    // TODO add command to send raw IRC commands
+
     std::string message = event.get_scalar_attribute( "message");
     std::string sender = event.get_scalar_attribute( "nick" );
 
@@ -30,7 +33,8 @@ void splinterClient::handle_command( IRCEventEnvelope& event )
 
     if (command.find("quit") == 0)
     {
-        send("QUIT :Bye!\r\n");
+        // TODO parameterize this to take quit message
+        quit("Bye!");
         return;
     }
 
@@ -158,7 +162,7 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
     if (it != clients_.end())
     {
         // Send a QUIT command to the client
-        it->second->send("QUIT :Bye!\r\n");
+        it->second->quit("Bye!");
         it->second->critical_thread_failed = true;
         send_private_message( reply_to, "Client with id '" + id + "' disconnected." );
 

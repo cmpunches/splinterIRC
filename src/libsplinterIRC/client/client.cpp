@@ -99,7 +99,7 @@ void splinterClient::connect()
          *  supported, then we can proceed with the authentication process or fail if
          *  it's not supported.
         */
-        send("CAP LS\r\n");
+        list_server_capabilities();
         sleep(1);
 
     } else {
@@ -111,6 +111,11 @@ void splinterClient::connect()
 void splinterClient::send( const std::string& message )
 {
     if (::send(socket_, message.c_str(), message.size(), 0) == -1)
+    {
+        std::cerr << "Failed to send message to server" << std::endl;
+        return;
+    }
+    if (::send(socket_, "\r\n", 2, 0) == -1)
     {
         std::cerr << "Failed to send message to server" << std::endl;
         return;

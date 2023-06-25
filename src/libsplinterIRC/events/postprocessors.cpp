@@ -221,7 +221,11 @@ void IRCEventEnvelope::postprocess_ERR_CANNOTSENDTOCHAN()
 void IRCEventEnvelope::postprocess_RPL_SASLSUCCESS()
 {
     std::string message = autoextract_params[1];
+    set_attribute("message", message);
+
     std::string sender = get_scalar_attribute("server");
+    set_attribute("sender", sender);
+
     set_attribute("_postprocessed", "true");
 }
 
@@ -401,14 +405,13 @@ void IRCEventEnvelope::postprocess_RPL_CREATED()
 
 void IRCEventEnvelope::postprocess_RPL_MYINFO()
 {
+    // TODO - add attributes for the various fields to client
+
     std::string sender = get_scalar_attribute( "server" );
     set_attribute( "sender", sender );
 
     std::string target = autoextract_params[0];
     set_attribute( "target", target );
-
-    std::string servername = autoextract_params[1];
-    set_attribute("servername", servername );
 
     std::string version = autoextract_params[2];
     set_attribute("version", version );
@@ -428,34 +431,208 @@ void IRCEventEnvelope::postprocess_RPL_MYINFO()
 void IRCEventEnvelope::postprocess_RPL_ISUPPORT()
 {
     // https://dd.ircdocs.horse/refs/numerics/005.html
+
+    // TODO: add supported features vector to client
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    std::string message = autoextract_params.back();
+    set_attribute( "message", message );
+
+    std::vector<std::string> tokens(autoextract_params.begin() + 1, autoextract_params.end() - 1);
+    set_attribute( "supported_features", tokens );
 }
 
+/*
+ *  RPL_BOUNCE (010)
+ *  "<client> <hostname> <port> :<info>"
+ *  Sent to the client to redirect it to another server.
+ *  The <info> text varies between server software and
+ *  reasons for the redirection.
+ *
+ *  Because this numeric does not specify whether to
+ *  enable SSL and is not interpreted correctly by all
+ *  clients, it is recommended that this not be used.
+ */
 void IRCEventEnvelope::postprocess_RPL_BOUNCE()
-{}
+{
+    std::string new_server = autoextract_params[1];
+    set_attribute( "new_server", new_server );
 
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
+
+/*
+ * RPL_STATSCOMMANDS (212)
+ * "<client> <command> <count> [<byte count> <remote count>]"
+ *
+ * Sent as a reply to the STATS command, when a client
+ * requests statistics on command usage.
+ *
+ * <byte count> and <remote count> are optional and MAY be
+ * included in responses.
+ */
 void IRCEventEnvelope::postprocess_RPL_STATSCOMMANDS()
-{}
+{
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    std::string command = autoextract_params[1];
+    set_attribute( "command", command );
+
+    std::string count = autoextract_params[2];
+    set_attribute( "count", count );
+
+    if ( autoextract_params.size() > 3 )
+    {
+        std::string byte_count = autoextract_params[3];
+        set_attribute( "byte_count", byte_count );
+
+        std::string remote_count = autoextract_params[4];
+        set_attribute( "remote_count", remote_count );
+    }
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_ENDOFSTATS()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_STATSUPTIME()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_UMODEIS()
-{}
+{
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
 
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    // TODO - add attributes for the various fields to client
+    std::string mode_change = autoextract_params[1];
+    set_attribute( "mode_change", mode_change );
+
+    // TODO update set_attribute to take a boolean
+    // TODO update get_attribute to take/return appropriate generic types for json instead of this split brain thing we're doing
+    set_attribute( "_postprocessed", "true" );
+}
+
+/*
+ *
+ * RPL_LUSERCLIENT (251)
+ *
+ * "<client> :There are <u> users and <i> invisible on <s> servers"
+ *
+ * Sent as a reply to the LUSERS command. <u>, <i>, and <s> are
+ * non-negative integers, and represent the number of total users,
+ * invisible users, and other servers connected to this server.
+ */
 void IRCEventEnvelope::postprocess_RPL_LUSERCLIENT()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_LUSEROP()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
 
 void IRCEventEnvelope::postprocess_RPL_LUSERUNKNOWN()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
 
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    set_attribute("_postprocessed", "true");
+}
+
+/*
+ * RPL_LUSERCHANNELS (254)
+ *
+ * "<client> <channels> :channels formed"
+ *
+ * Sent as a reply to the LUSERS command. <channels> is
+ * a positive integer and represents the number of channels
+ * that currently exist on this server. The text used in
+ * the last param of this message may vary.
+ */
 void IRCEventEnvelope::postprocess_RPL_LUSERCHANNELS()
-{}
+{
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
+
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
+
+
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+
+
+    set_attribute("_postprocessed", "true");
+
+}
 
 void IRCEventEnvelope::postprocess_RPL_LUSERME()
 {}
@@ -605,13 +782,52 @@ void IRCEventEnvelope::postprocess_RPL_ENDOFINFO()
 {}
 
 void IRCEventEnvelope::postprocess_RPL_MOTDSTART()
-{}
+{
+    std::string motd = autoextract_params[1];
+    set_attribute( "message", motd );
+
+    std::string sender = get_scalar_attribute( "server");
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    // TODO update set_attribute to take a boolean
+    // TODO update get_attribute to take/return appropriate generic types for json instead of this split brain thing we're doing
+    set_attribute( "_postprocessed", "true" );
+}
 
 void IRCEventEnvelope::postprocess_RPL_MOTD()
-{}
+{
+    std::string motd = autoextract_params[1];
+    set_attribute( "message", motd );
+
+    std::string sender = get_scalar_attribute( "server");
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    // TODO update set_attribute to take a boolean
+    // TODO update get_attribute to take/return appropriate generic types for json instead of this split brain thing we're doing
+    set_attribute( "_postprocessed", "true" );
+}
 
 void IRCEventEnvelope::postprocess_RPL_ENDOFMOTD()
-{}
+{
+    std::string motd = autoextract_params[1];
+    set_attribute( "message", motd );
+
+    std::string sender = get_scalar_attribute( "server");
+    set_attribute( "sender", sender );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    // TODO update set_attribute to take a boolean
+    // TODO update get_attribute to take/return appropriate generic types for json instead of this split brain thing we're doing
+    set_attribute( "_postprocessed", "true" );
+}
 
 void IRCEventEnvelope::postprocess_RPL_WHOISHOST()
 {}

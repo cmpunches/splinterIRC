@@ -38,6 +38,11 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void join_channel( std::string channel );
         void set_nick( std::string nick );
         void send_private_message( std::string nick, std::string message );
+        void quit( std::string message );
+        void list_server_capabilities();
+        void send_ping_reply( std::string target );
+        void request_sasl_capability();
+        void end_capabilites_negotiation();
 
         // register the user
         void set_user( std::string user );
