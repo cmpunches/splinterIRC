@@ -97,7 +97,6 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void list_clients( const std::string& reply_to );
         void destroy_client( const std::string& reply_to, const std::string& id );
 
-
         // EVENT HANDLERS
         // These are tied to the decision_loop() function.
         // They are called when an event is received if mapped to that event command.

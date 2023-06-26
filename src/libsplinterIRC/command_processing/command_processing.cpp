@@ -32,6 +32,11 @@ std::string get_after_word(int index, const std::string& str) {
         }
         count++;
     }
+    // trim leading whitespace
+    size_t start = result.find_first_not_of(" \t\n\r\f\v");
+    if (start != std::string::npos) {
+        result = result.substr(start);
+    }
     return result;
 }
 
@@ -202,17 +207,17 @@ void splinterClient::handle_command_help(std::string& sender, std::string& comma
 
 void splinterClient::handle_command_quit(std::string& sender, std::string& command )
 {
-    std::string first_word = get_word( 1, command );
+    std::string subcommand = get_word(1, command );
 
     // quit [<message>]
 
-    if ( !( first_word == "quit" ) )
+    if ( !(subcommand == "quit" ) )
     {
         // not a quit command, return.
         return;
     }
 
-    std::string quit_message = get_after_word(2, command );
+    std::string quit_message = get_after_word(1, command );
 
     // check if a message was supplied for the subcommand
     if ( ! quit_message.empty() )
@@ -466,14 +471,14 @@ void splinterClient::handle_command( IRCEventEnvelope& event )
         return;
     }
 
-    handle_command_help( sender, command );
-    handle_command_quit( sender, command );
-    handle_command_splinter( sender, command );
-    handle_command_list( sender, command );
-    handle_command_destroy( sender, command );
-    handle_command_join( sender, command );
-    handle_command_say( sender, command );
-    handle_command_raw( sender, command );
+    handle_command_help(        sender, command );
+    handle_command_quit(        sender, command );
+    handle_command_splinter(    sender, command );
+    handle_command_list(        sender, command );
+    handle_command_destroy(     sender, command );
+    handle_command_join(        sender, command );
+    handle_command_say(         sender, command );
+    handle_command_raw(         sender, command );
 }
 
 void splinterClient::prompt_help_general(std::string& reply_to )
