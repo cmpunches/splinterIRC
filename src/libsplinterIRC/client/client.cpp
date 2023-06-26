@@ -89,9 +89,6 @@ void splinterClient::connect()
 
     if (use_sasl_)
     {
-        // Send CAP LS command to request a list of capabilities supported by the server
-        // TODO: make this a client action
-
         /*
          * TODO: make this parameterized as we're not really using CAP LS as intended.
          *  It should be something to the tune of a client action that returns a list of
@@ -104,7 +101,7 @@ void splinterClient::connect()
 
     } else {
         set_nick( nick_ );
-        set_user( nick_ );
+        register_user(nick_);
     }
 }
 

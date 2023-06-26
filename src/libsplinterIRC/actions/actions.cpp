@@ -17,7 +17,7 @@ void splinterClient::set_nick( std::string nick )
     nick_ = nick;
 }
 
-void splinterClient::set_user( std::string user )
+void splinterClient::register_user(std::string user )
 {
     send("USER " + user + " 0 * :" + user );
 }

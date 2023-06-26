@@ -113,7 +113,7 @@ void splinterClient::handle_RPL_LOGGEDIN( IRCEventEnvelope& event )
     end_capabilites_negotiation();
 
     set_nick( nick_ );
-    set_user( nick_ );
+    register_user(nick_);
 }
 
 void splinterClient::handle_ERR_SASLFAIL( IRCEventEnvelope& event )

@@ -45,7 +45,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void end_capabilites_negotiation();
 
         // register the user
-        void set_user( std::string user );
+        void register_user(std::string user );
 
         // get the sender of the client
         const std::string& get_nick() const;
@@ -64,6 +64,14 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
 
     private:
+        bool is_owner( const std::string& username );
+        void set_owner( const std::string& username );
+        bool has_valid_session( std::string& sender );
+
+        void handle_command_authentication(std::string& sender, std::string& command );
+        void handle_command_help(std::string& sender, std::string& command );
+        void handle_command_quit( std::string& sender, std::string& command );
+        void handle_command_splinter( std::string& sender, std::string& command );
 
         static std::map<std::string, std::shared_ptr<splinterClient>> clients_;
 
@@ -78,20 +86,38 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
         void send(const std::string& message);
 
-
         void observation_loop();
         void processing_loop();
 
         void decision_loop( IRCEventEnvelope& event );
 
+        bool password_is_valid( const std::string& command );
+
+        // actions
+        void list_clients( const std::string& reply_to );
+        void destroy_client( const std::string& reply_to, const std::string& id );
+
+
         // EVENT HANDLERS
         // These are tied to the decision_loop() function.
         // They are called when an event is received if mapped to that event command.
-        void list_clients( const std::string& reply_to );
-        void destroy_client( const std::string& reply_to, const std::string& id );
-        void help_prompt( std::string reply_to, std::string& command );
-        bool password_is_valid( const std::string& command );
+        void prompt_help_general(std::string& reply_to );
+        void prompt_help_splinter(std::string& reply_to );
+        void prompt_help_destroy(std::string& reply_to );
+        void prompt_help_list(std::string& reply_to );
+        void prompt_help_join(std::string& reply_to );
+        void prompt_help_say(std::string& reply_to );
+        void prompt_help_raw(std::string& reply_to );
+        void prompt_help_auth(std::string& reply_to );
+        void prompt_help_quit(std::string& reply_to );
+
         void handle_command( IRCEventEnvelope& event );
+        void handle_command_list( std::string& sender, std::string& command );
+        void handle_command_destroy( std::string& sender, std::string& command );
+        void handle_command_join( std::string& sender, std::string& command );
+        void handle_command_say( std::string& sender, std::string& command );
+        void handle_command_raw( std::string& sender, std::string& command );
+
         void handle_unassociated_event( IRCEventEnvelope& event );
         void handle_UNKNOWN( IRCEventEnvelope& event );
         void handle_JOIN( IRCEventEnvelope& event );
@@ -286,6 +312,9 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         // flag that tells event loops to prepare to exit
         std::atomic<bool> critical_thread_failed{false};
 
+        bool command_authenticated_ = false;
+        std::string owner_;
+
         // the some features of the IRC protocol are stateful, so we need to
         // keep track of what state we're in for some of the handlers
         enum State {
@@ -308,6 +337,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         // initial state is disconnected
         int state_ = State::CLIENT_DISCONNECTED;
 };
+
 
 
 
