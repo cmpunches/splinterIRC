@@ -1,7 +1,7 @@
 #include "../client/client.h"
 
-// TODO add a command for a two-way bridge between channels or PMs
-// TODO add a command for a one-way bridge between channels or PMs
+// TODO add a command for a two-way bridge between channels or PMs -- include cross-splinter support
+// TODO add a command for a one-way bridge between channels or PMs -- include cross-splinter support
 
 // gets the Nth word of a string
 std::string get_word(int index, const std::string& str)
@@ -575,3 +575,9 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
         std::cerr << "No client with id '" << id << "' found" << std::endl;
     }
 }
+
+// TODO: add a command to list channels the splinter is in
+// TODO: add current channels tracker to splinterClient
+// TODO: add a command to part a channel
+// TODO: add a command to change topic on a channel
+// TODO: add maintenance of current channels list to handlers (join/part/kicked)

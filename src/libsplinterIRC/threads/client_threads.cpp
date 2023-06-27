@@ -38,12 +38,6 @@ void splinterClient::observation_loop()
 
             while (std::getline(stream, event_line, '\r'))
             {
-                // Create a new IRCEventEnvelope object for each line
-                //std::unique_lock<std::mutex> lock(orientation_mutex_);
-
-                // push it to the ingestion queue
-                //orientation_queue_.push(IRCEventEnvelope{event_line, server_});
-                //orientation_cond_.notify_one();
                 enqueue_event(IRCEventEnvelope{event_line, server_});
             }
         }
@@ -111,7 +105,7 @@ void splinterClient::enqueue_event(IRCEventEnvelope event)
 
 void splinterClient::execute_action(IRCActionEnvelope &action)
 {
-
+    usleep(250000);
     //std::cout << action.actor_id << ": Executing action: " << action.action << std::endl;
     auto it = clients_.find(std::to_string( action.actor_id ));
     if (it == clients_.end())

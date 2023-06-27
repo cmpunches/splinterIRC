@@ -49,6 +49,21 @@ splinterClient::~splinterClient()
     {
         close(socket_);
     }
+    destroy_self();
+}
+
+void splinterClient::destroy_self()
+{
+    // Check if a client with the provided identifier exists
+    auto it = clients_.find( std::to_string( get_id()) );
+    if (it != clients_.end())
+    {
+        std::cerr << "Dropping splinter with ID '" << std::to_string(splinter_id_) << "'." << std::endl;
+        // Remove the client from the clients_ member variable
+        clients_.erase(it);
+    } else {
+        std::cerr << "No client with id '" << std::to_string(splinter_id_) << "' found.  Report this as a bug." << std::endl;
+    }
 }
 
 void splinterClient::connect()
@@ -97,7 +112,7 @@ void splinterClient::connect()
          *  it's not supported.
         */
         list_server_capabilities();
-        sleep(1);
+        //sleep(1);
 
     } else {
         set_nick( nick_ );

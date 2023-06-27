@@ -243,7 +243,11 @@ void splinterClient::handle_PING( IRCEventEnvelope& event )
 void splinterClient::handle_QUIT( IRCEventEnvelope& event )
 {
     report_event(event);
-    critical_thread_failed = true;
+    if ( event.get_scalar_attribute("nick") == nick_ )
+    {
+        critical_thread_failed = true;
+        destroy_self();
+    }
 }
 
 void splinterClient::handle_JOIN( IRCEventEnvelope& event )

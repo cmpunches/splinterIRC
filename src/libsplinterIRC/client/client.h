@@ -46,6 +46,8 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void end_capabilites_negotiation();
         void whois_user( std::string nick );
 
+        void destroy_self();
+
         // register the user
         void register_user(std::string user );
 
@@ -63,6 +65,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
         // main loop
         void run_event_loop();
+
 
 
     private:
