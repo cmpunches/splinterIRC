@@ -581,3 +581,5 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
 // TODO: add a command to part a channel
 // TODO: add a command to change topic on a channel
 // TODO: add maintenance of current channels list to handlers (join/part/kicked)
+
+// TODO: add support for sending an event to an AMQP exchange
