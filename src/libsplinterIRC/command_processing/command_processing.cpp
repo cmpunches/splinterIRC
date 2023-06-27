@@ -432,7 +432,9 @@ void splinterClient::handle_command_raw( std::string& sender, std::string& comma
             if (it != clients_.end())
             {
                 // Send the raw command to the specified client
-                it->second->send(raw);
+                IRCActionEnvelope action = IRCActionEnvelope( stoi(id) , raw);
+                enqueue_action(action);
+
                 send_private_message(sender, "\"" + it->second->server_ + "\"/" + std::to_string(it->second->get_id()) + ": (raw)" + raw );
             } else {
                 send_private_message(sender, "No client with id '" + id + "' found" );

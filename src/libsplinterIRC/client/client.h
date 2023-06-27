@@ -15,6 +15,7 @@
 #include <map>
 #include <atomic>
 #include "../events/IRCEventv3.h"
+#include "../actions/IRCActionEnvelope.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -43,6 +44,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void send_ping_reply( std::string target );
         void request_sasl_capability();
         void end_capabilites_negotiation();
+        void whois_user( std::string nick );
 
         // register the user
         void register_user(std::string user );
@@ -64,6 +66,15 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
 
     private:
+        // adds an action to the queue
+        void enqueue_action(IRCActionEnvelope action);
+
+        // adds an event to the event queue
+        void enqueue_event(IRCEventEnvelope event);
+
+        // executes an action on the intended splinter
+        void execute_action(IRCActionEnvelope& action);
+
         bool is_owner( const std::string& username );
         void set_owner( const std::string& username );
         bool has_valid_session( std::string& sender );
@@ -87,9 +98,10 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void send(const std::string& message);
 
         void observation_loop();
-        void processing_loop();
+        void orientation_loop();
+        void action_loop();
 
-        void decision_loop( IRCEventEnvelope& event );
+        void make_decision(IRCEventEnvelope& event );
 
         bool password_is_valid( const std::string& command );
 
@@ -98,7 +110,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void destroy_client( const std::string& reply_to, const std::string& id );
 
         // EVENT HANDLERS
-        // These are tied to the decision_loop() function.
+        // These are tied to the make_decision() function.
         // They are called when an event is received if mapped to that event command.
         void prompt_help_general(std::string& reply_to );
         void prompt_help_splinter(std::string& reply_to );
@@ -289,9 +301,13 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         int socket_;
 
         // thread management
-        std::queue<IRCEventEnvelope> event_queue_;
-        std::mutex mutex_;
-        std::condition_variable cond_;
+        std::queue<IRCEventEnvelope> orientation_queue_;
+        std::mutex orientation_mutex_;
+        std::condition_variable orientation_cond_;
+
+        std::queue<IRCActionEnvelope> action_queue_;
+        std::mutex action_mutex_;
+        std::condition_variable action_cond_;
 
         // password to use for orchestration of the splinterIRC client
         std::string password_;

@@ -1,7 +1,7 @@
 #include "../client/client.h"
 
 // decision/action
-void splinterClient::decision_loop(IRCEventEnvelope& event)
+void splinterClient::make_decision(IRCEventEnvelope& event)
 {
     // command mappings for actions and events
     switch (event.get_type() )

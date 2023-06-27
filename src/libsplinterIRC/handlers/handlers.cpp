@@ -46,7 +46,9 @@ void splinterClient::handle_S_RPL_CAP_ACK( IRCEventEnvelope& event ) {
     if ( capability == "sasl" )
     {
         // Send AUTHENTICATE command to initiate SASL authentication
-        send("AUTHENTICATE PLAIN");
+        std::string command = "AUTHENTICATE PLAIN";
+        IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
+        enqueue_action(action);
     } else {
         std::cerr << "Received an unprocessed CAP ACK message.  Report this message as a parsing bug." << std::endl;
         critical_thread_failed = true;
@@ -95,7 +97,10 @@ void splinterClient::handle_AUTHENTICATE( IRCEventEnvelope& event )
 
     // Send AUTHENTICATE command with base64-encoded credentials
     std::string auth = sasl_username_ + '\0' + sasl_username_ + '\0' + sasl_password_;
-    send("AUTHENTICATE " + base64_encode(auth));
+
+    std::string command = "AUTHENTICATE " + base64_encode(auth);
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
+    enqueue_action(action);
 }
 
 void splinterClient::handle_RPL_SASLSUCCESS( IRCEventEnvelope& event )
@@ -178,14 +183,16 @@ void splinterClient::handle_ctcp_version(IRCEventEnvelope& event)
 {
     std::string target = event.get_scalar_attribute("sender");
     std::string message = "NOTICE " + target + " :\x01VERSION splinterIRC\x01";
-    send(message);
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , message );
+    enqueue_action(action);
 }
 
 void splinterClient::handle_ctcp_time( IRCEventEnvelope& event )
 {
     std::string target = event.get_scalar_attribute("sender");
     std::string message = "NOTICE " + target + " :\x01TIME " + std::to_string(std::time(nullptr)) + "\x01";
-    send(message);
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , message );
+    enqueue_action(action);
 }
 
 void splinterClient::handle_ctcp_ping(IRCEventEnvelope& event)
@@ -194,7 +201,8 @@ void splinterClient::handle_ctcp_ping(IRCEventEnvelope& event)
     std::string message = event.get_scalar_attribute("message");
     std::string ctcp_args = message.substr(6, message.size() - 7);
     message = "NOTICE " + target + " :\x01PING " + ctcp_args + "\x01";
-    send(message);
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , message );
+    enqueue_action(action);
 }
 
 void splinterClient::handle_ctcp( IRCEventEnvelope& event )
@@ -566,6 +574,10 @@ void splinterClient::handle_RPL_VERSION( IRCEventEnvelope& event )
 void splinterClient::handle_RPL_NAMREPLY( IRCEventEnvelope& event )
 {
     report_event(event);
+    for (auto &nick: event.get_array_attribute("channel_members"))
+    {
+        whois_user(nick);
+    }
 }
 
 void splinterClient::handle_RPL_ENDOFNAMES( IRCEventEnvelope& event )

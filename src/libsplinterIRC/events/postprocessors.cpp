@@ -201,6 +201,8 @@ void IRCEventEnvelope::postprocess_RPL_NAMREPLY()
     set_attribute( "channel", channel );
 
     set_attribute( "channel_members", split(autoextract_params[3], ' ') );
+
+    set_attribute("_postprocessed", "true");
 }
 
 void IRCEventEnvelope::postprocess_ERR_CANNOTSENDTOCHAN()

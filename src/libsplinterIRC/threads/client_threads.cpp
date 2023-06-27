@@ -39,37 +39,85 @@ void splinterClient::observation_loop()
             while (std::getline(stream, event_line, '\r'))
             {
                 // Create a new IRCEventEnvelope object for each line
-                std::unique_lock<std::mutex> lock(mutex_);
+                //std::unique_lock<std::mutex> lock(orientation_mutex_);
 
                 // push it to the ingestion queue
-                event_queue_.push(IRCEventEnvelope{event_line, server_});
-                cond_.notify_one();
+                //orientation_queue_.push(IRCEventEnvelope{event_line, server_});
+                //orientation_cond_.notify_one();
+                enqueue_event(IRCEventEnvelope{event_line, server_});
             }
         }
     }
 }
 
-void splinterClient::processing_loop()
+void splinterClient::orientation_loop()
 {
     // reads from the event queue and sends the events into the orientation/decision loop
     // the orientation/decision loop is where the event handlers are mapped to actions
     while ( !critical_thread_failed )
     {
         IRCEventEnvelope event = [&] {
-            std::unique_lock<std::mutex> lock(mutex_);
-            cond_.wait(lock, [this] { return !event_queue_.empty(); });
-            IRCEventEnvelope event = event_queue_.front();
-            event_queue_.pop();
+            std::unique_lock<std::mutex> lock(orientation_mutex_);
+            orientation_cond_.wait(lock, [this] { return !orientation_queue_.empty(); });
+            IRCEventEnvelope event = orientation_queue_.front();
+            orientation_queue_.pop();
             return event;
         }();
-        decision_loop(event);
+        // maps an event to a handler, which decides upon an action to take and enqueues
+        // the action to be sent to the server
+        make_decision(event);
+    }
+}
+
+void splinterClient::action_loop()
+{
+    // reads from the action queue and sends the actions to the server
+    while ( !critical_thread_failed )
+    {
+        IRCActionEnvelope action = [&] {
+            std::unique_lock<std::mutex> lock(action_mutex_);
+            action_cond_.wait(lock, [this] { return !action_queue_.empty(); });
+            IRCActionEnvelope action = action_queue_.front();
+            action_queue_.pop();
+            return action;
+        }();
+        execute_action(action);
     }
 }
 
 void splinterClient::run_event_loop()
 {
     std::thread observation_thread(&splinterClient::observation_loop, this);
-    std::thread processing_thread(&splinterClient::processing_loop, this);
+    std::thread orientation_thread(&splinterClient::orientation_loop, this);
+    std::thread action_thread(&splinterClient::action_loop, this);
     observation_thread.join();
-    processing_thread.join();
+    orientation_thread.join();
+    action_thread.join();
+}
+
+void splinterClient::enqueue_action(IRCActionEnvelope action)
+{
+    std::unique_lock<std::mutex> lock(action_mutex_);
+    action_queue_.push(action);
+    action_cond_.notify_one();
+}
+
+void splinterClient::enqueue_event(IRCEventEnvelope event)
+{
+    std::unique_lock<std::mutex> lock(orientation_mutex_);
+    orientation_queue_.push(event);
+    orientation_cond_.notify_one();
+}
+
+void splinterClient::execute_action(IRCActionEnvelope &action)
+{
+
+    std::cout << action.actor_id << ": Executing action: " << action.action << std::endl;
+    auto it = clients_.find(std::to_string( action.actor_id ));
+    if (it == clients_.end())
+    {
+        std::cerr << "Action execution failed.  Failed to find client with id: " << action.actor_id << std::endl;
+        return;
+    }
+    it->second->send(action.action);
 }
