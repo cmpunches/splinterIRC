@@ -420,7 +420,7 @@ void splinterClient::handle_command_raw( std::string& sender, std::string& comma
             prompt_help_raw(sender);
             return;
         } else {
-            std::string raw = get_after_word(3, command );
+            std::string raw = get_after_word(2, command );
             if ( raw.empty() )
             {
                 prompt_help_raw(sender);

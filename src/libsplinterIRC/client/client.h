@@ -261,6 +261,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_ERR_SASLABORTED(  IRCEventEnvelope& event );
         void handle_ERR_SASLALREADY(  IRCEventEnvelope& event );
         void handle_RPL_SASLMECHS(  IRCEventEnvelope& event );
+        void handle_RPL_STATSDLINE(  IRCEventEnvelope& event );
 
         void handle_ctcp_version( IRCEventEnvelope& event);
         void handle_ctcp_time(  IRCEventEnvelope& event );

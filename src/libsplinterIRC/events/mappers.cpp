@@ -29,6 +29,8 @@ IRCEventEnvelope::Type IRCEventEnvelope::verb_to_type(const std::string& token )
     } else if ( token == "219" ) { return Type::RPL_ENDOFSTATS;
     } else if ( token == "242" ) { return Type::RPL_STATSUPTIME;
     } else if ( token == "221" ) { return Type::RPL_UMODEIS;
+    // non-standard, thanks Libera
+    } else if ( token == "250" ) { return Type::RPL_STATSDLINE;
     } else if ( token == "251" ) { return Type::RPL_LUSERCLIENT;
     } else if ( token == "252" ) { return Type::RPL_LUSEROP;
     } else if ( token == "253" ) { return Type::RPL_LUSERUNKNOWN;
@@ -188,6 +190,7 @@ std::string IRCEventEnvelope::type_to_verb(Type type) const {
         case Type::RPL_ENDOFSTATS: return "RPL_ENDOFSTATS";
         case Type::RPL_STATSUPTIME: return "RPL_STATSUPTIME";
         case Type::RPL_UMODEIS: return "RPL_UMODEIS";
+        case Type::RPL_STATSDLINE: return "RPL_STATSDLINE";
         case Type::RPL_LUSERCLIENT: return "RPL_LUSERCLIENT";
         case Type::RPL_LUSEROP: return "RPL_LUSEROP";
         case Type::RPL_LUSERUNKNOWN: return "RPL_LUSERUNKNOWN";
@@ -395,6 +398,9 @@ void IRCEventEnvelope::postprocess() {
             break;
         case Type::RPL_UMODEIS:
             postprocess_RPL_UMODEIS();
+            break;
+        case Type::RPL_STATSDLINE:
+            postprocess_RPL_STATSDLINE();
             break;
         case Type::RPL_LUSERCLIENT:
             postprocess_RPL_LUSERCLIENT();

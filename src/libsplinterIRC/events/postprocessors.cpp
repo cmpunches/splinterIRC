@@ -623,15 +623,28 @@ void IRCEventEnvelope::postprocess_RPL_LUSERCHANNELS()
     std::string sender = get_scalar_attribute( "server" );
     set_attribute( "sender", sender );
 
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
 
+    set_attribute("_postprocessed", "true");
+
+}
+
+void IRCEventEnvelope::postprocess_RPL_STATSDLINE()
+{
+    std::string sender = get_scalar_attribute( "server" );
+    set_attribute( "sender", sender );
 
     std::string target = autoextract_params[0];
     set_attribute( "target", target );
 
+    // TODO - add attributes for the various fields to client
+    std::string message = autoextract_params[1];
+    set_attribute( "message", message );
 
-
-    set_attribute("_postprocessed", "true");
-
+    // TODO update set_attribute to take a boolean
+    // TODO update get_attribute to take/return appropriate generic types for json instead of this split brain thing we're doing
+    set_attribute( "_postprocessed", "true" );
 }
 
 void IRCEventEnvelope::postprocess_RPL_LUSERME()

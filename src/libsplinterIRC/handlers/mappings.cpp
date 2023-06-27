@@ -596,6 +596,10 @@ void splinterClient::decision_loop(IRCEventEnvelope& event)
             handle_AUTHENTICATE(event);
             break;
 
+        case IRCEventEnvelope::Type::RPL_STATSDLINE:
+            handle_RPL_STATSDLINE(event);
+            break;
+
         default:
             handle_unassociated_event(event);
             break;

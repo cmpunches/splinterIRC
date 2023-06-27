@@ -50,6 +50,8 @@ class IRCEventEnvelope {
             RPL_ENDOFSTATS,
             RPL_STATSUPTIME,
             RPL_UMODEIS,
+            // non-compliant libera bullshit
+            RPL_STATSDLINE,
             RPL_LUSERCLIENT,
             RPL_LUSEROP,
             RPL_LUSERUNKNOWN,
@@ -246,6 +248,7 @@ class IRCEventEnvelope {
         void postprocess_RPL_ENDOFSTATS();
         void postprocess_RPL_STATSUPTIME();
         void postprocess_RPL_UMODEIS();
+        void postprocess_RPL_STATSDLINE();
         void postprocess_RPL_LUSERCLIENT();
         void postprocess_RPL_LUSEROP();
         void postprocess_RPL_LUSERUNKNOWN();

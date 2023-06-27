@@ -143,15 +143,20 @@ void splinterClient::handle_RPL_SASLMECHS( IRCEventEnvelope& event )
     report_event(event);
 }
 
+void splinterClient::handle_RPL_STATSDLINE( IRCEventEnvelope& event )
+{
+    report_event(event);
+}
+
 void splinterClient::handle_unassociated_event( IRCEventEnvelope& event )
 {
     std::cerr << "Received a command without a handler associated.  Report this message as a bug." << std::endl;
-    std::cerr << event.to_json() << std::endl;
+    std::cerr << event.to_json(1, 4, 1) << std::endl;
 }
 
 void splinterClient::handle_UNKNOWN( IRCEventEnvelope& event )
 {
-    std::cerr << "Unknown message command handled: ";
+    std::cerr << "Unknown message command handled: " << std::endl;
     std::cerr << event.to_json(1, 4, 1) << std::endl;
 }
 
