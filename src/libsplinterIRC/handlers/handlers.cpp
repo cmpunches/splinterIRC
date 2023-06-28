@@ -252,17 +252,24 @@ void splinterClient::handle_QUIT( IRCEventEnvelope& event )
 
 void splinterClient::handle_JOIN( IRCEventEnvelope& event )
 {
+    // if someone joins a channel and you see it, you're in that channel
     report_event(event);
+    std::string channel = event.get_scalar_attribute("channel");
+    channels_add(channel);
 }
 
 void splinterClient::handle_PART( IRCEventEnvelope& event )
 {
     report_event(event);
+    std::string channel = event.get_scalar_attribute("channel");
+    channels_del(channel);
 }
 
 void splinterClient::handle_KICK( IRCEventEnvelope& event )
 {
     report_event(event);
+    std::string channel = event.get_scalar_attribute("channel");
+    channels_del(channel);
 }
 
 void splinterClient::handle_NOTICE( IRCEventEnvelope& event )
@@ -273,6 +280,12 @@ void splinterClient::handle_NOTICE( IRCEventEnvelope& event )
 void splinterClient::handle_NICK( IRCEventEnvelope& event )
 {
     report_event(event);
+    std::string old_nick = event.get_scalar_attribute("old_nick");
+    std::string new_nick = event.get_scalar_attribute("new_nick");
+    if ( old_nick == nick_ )
+    {
+        nick_ = new_nick;
+    }
 }
 
 void splinterClient::handle_TOPIC( IRCEventEnvelope& event )

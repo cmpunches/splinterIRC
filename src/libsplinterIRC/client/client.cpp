@@ -66,6 +66,25 @@ void splinterClient::destroy_self()
     }
 }
 
+// called when a client is removed from a channel
+void splinterClient::channels_del(std::string &channel) {
+    auto it = std::remove(current_channels.begin(), current_channels.end(), channel );
+    current_channels.erase(it, current_channels.end());
+}
+
+// called when a client is added to a channel to track which channels the client is in
+void splinterClient::channels_add(std::string &channel)
+{
+    if (!is_in_channel(channel)) {
+        current_channels.push_back(channel);
+    }
+}
+
+// checks if a client is in a channel
+bool splinterClient::is_in_channel(std::string &channel) {
+    return std::find(current_channels.begin(), current_channels.end(), channel) != current_channels.end();
+}
+
 void splinterClient::connect()
 {
     struct addrinfo hints;

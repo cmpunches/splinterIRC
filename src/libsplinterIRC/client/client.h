@@ -69,6 +69,12 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
 
     private:
+        std::vector<std::string> current_channels;
+        void channels_del(std::string& channel );
+        void channels_add(std::string& channel );
+
+        bool is_in_channel(std::string &channel);
+
         // adds an action to the queue
         void enqueue_action(IRCActionEnvelope action);
 

@@ -200,7 +200,14 @@ void IRCEventEnvelope::postprocess_RPL_NAMREPLY()
     std::string channel = autoextract_params[2];
     set_attribute( "channel", channel );
 
-    set_attribute( "channel_members", split(autoextract_params[3], ' ') );
+    std::vector<std::string> members = split(autoextract_params[3], ' ');
+    for (auto &member : members) {
+        // remove any symbols used to indicate user privileges
+        if (!isalnum(member[0])) {
+            member.erase(0, 1);
+        }
+    }
+    set_attribute( "channel_members", members );
 
     set_attribute("_postprocessed", "true");
 }
@@ -236,8 +243,12 @@ void IRCEventEnvelope::postprocess_PART()
     std::string channel = autoextract_params[0];
     set_attribute( "channel", channel );
 
-    std::string message = autoextract_params[1];
-    set_attribute( "message", message );
+    // sometimes the user won't supply a message
+    std::string message;
+    if (autoextract_params.size() > 1) {
+        message = autoextract_params[1];
+    }
+    set_attribute("message", message);
 
     std::string sender = get_scalar_attribute( "_prefix" );
     set_attribute( "sender", sender );

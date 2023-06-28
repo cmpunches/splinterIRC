@@ -222,7 +222,6 @@ void splinterClient::handle_command_quit(std::string& sender, std::string& comma
     // check if a message was supplied for the subcommand
     if ( ! quit_message.empty() )
     {
-        // TODO add quit message
         quit(quit_message);
         return;
     }
