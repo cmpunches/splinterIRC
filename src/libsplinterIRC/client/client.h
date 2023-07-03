@@ -14,7 +14,8 @@
 #include <sstream>
 #include <map>
 #include <atomic>
-#include "../events/IRCEventv3.h"
+#include "../helpers/helpers.h"
+#include "../events/IRCEventEnvelope.h"
 #include "../actions/IRCActionEnvelope.h"
 #include <algorithm>
 #include <string>
@@ -74,6 +75,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void channels_add(std::string& channel );
 
         bool is_in_channel(std::string &channel);
+        bool is_in_channel( const int& splinter_id, std::string &channel);
 
         // adds an action to the queue
         void enqueue_action(IRCActionEnvelope action);

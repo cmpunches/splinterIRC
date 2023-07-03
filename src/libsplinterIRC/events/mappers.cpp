@@ -1,4 +1,4 @@
-#include "IRCEventv3.h"
+#include "IRCEventEnvelope.h"
 
 IRCEventEnvelope::Type IRCEventEnvelope::verb_to_type(const std::string& token ) const
 {

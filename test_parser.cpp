@@ -4,7 +4,7 @@
 #include <string>
 #include <getopt.h>
 #include <fstream>
-#include "src/libsplinterIRC/events/IRCEventv3.h"
+#include "src/libsplinterIRC/events/IRCEventEnvelope.h"
 
 int main() {
     std::ifstream file("parser_tests.txt");

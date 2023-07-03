@@ -1,4 +1,4 @@
-#include "IRCEventv3.h"
+#include "IRCEventEnvelope.h"
 
 void IRCEventEnvelope::postprocess_S_RPL_CAP()
 {

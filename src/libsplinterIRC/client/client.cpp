@@ -80,9 +80,20 @@ void splinterClient::channels_add(std::string &channel)
     }
 }
 
-// checks if a client is in a channel
+// checks if this client is in a channel
 bool splinterClient::is_in_channel(std::string &channel) {
     return std::find(current_channels.begin(), current_channels.end(), channel) != current_channels.end();
+}
+
+// checks if any client is in a channel
+bool splinterClient::is_in_channel( const int& splinter_id, std::string& channel )
+{
+    auto it = clients_.find( std::to_string( splinter_id ) );
+    if (it != clients_.end())
+    {
+        return it->second->is_in_channel(channel);
+    }
+    return false;
 }
 
 void splinterClient::connect()
@@ -171,3 +182,4 @@ bool splinterClient::password_is_valid( const std::string& passtoken )
     bool result = (passtoken == password_);
     return result;
 }
+

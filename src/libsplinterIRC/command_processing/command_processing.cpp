@@ -3,42 +3,7 @@
 // TODO add a command for a two-way bridge between channels or PMs -- include cross-splinter support
 // TODO add a command for a one-way bridge between channels or PMs -- include cross-splinter support
 
-// gets the Nth word of a string
-std::string get_word(int index, const std::string& str)
-{
-    std::istringstream iss(str);
-    std::string word;
-    int count = 1;
-    while (iss >> word)
-    {
-        if (count == index)
-        {
-            return word;
-        }
-        count++;
-    }
-    return "";
-}
 
-std::string get_after_word(int index, const std::string& str) {
-    std::istringstream iss(str);
-    std::string word;
-    std::string result;
-    int count = 1;
-    while (iss >> word) {
-        if (count >= index) {
-            result = str.substr(iss.tellg());
-            break;
-        }
-        count++;
-    }
-    // trim leading whitespace
-    size_t start = result.find_first_not_of(" \t\n\r\f\v");
-    if (start != std::string::npos) {
-        result = result.substr(start);
-    }
-    return result;
-}
 
 // checks if the supplied username is the owner
 bool splinterClient::is_owner( const std::string &username )

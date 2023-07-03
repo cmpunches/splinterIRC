@@ -1,5 +1,5 @@
-#ifndef SPLINTERIRC_IRCEVENTV3_H
-#define SPLINTERIRC_IRCEVENTV3_H
+#ifndef SPLINTERIRC_IRCEVENTENVELOPE_H
+#define SPLINTERIRC_IRCEVENTENVELOPE_H
 
 #include <string>
 #include <sstream>
@@ -7,6 +7,7 @@
 #include <map>
 #include <iomanip>
 #include <iostream>
+#include "../helpers/helpers.h"
 
 // TODO add 477 numeric for libera representing channel requiring registered nick
 /*
@@ -221,10 +222,6 @@ class IRCEventEnvelope {
         std::string to_json(bool pretty = false, int indent = 4, bool debug = false ) const;
 
     private:
-        // parser helper, splits strings based on a char delimiter into a vector of strings
-        std::vector<std::string> split(const std::string& str, char delimiter);
-
-
         // basic parser to extract the verb and parameters
         void parse();
 
@@ -404,4 +401,4 @@ class IRCEventEnvelope {
         std::map<std::string, std::vector<std::string>> array_attributes;
 };
 
-#endif //SPLINTERIRC_IRCEVENTV3_H
+#endif //SPLINTERIRC_IRCEVENTENVELOPE_H

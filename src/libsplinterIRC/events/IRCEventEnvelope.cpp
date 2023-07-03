@@ -1,4 +1,4 @@
-#include "IRCEventv3.h"
+#include "IRCEventEnvelope.h"
 
 IRCEventEnvelope::IRCEventEnvelope(const std::string& raw, const std::string& server ) {
     // set the server attribute so that event processors know which server this event came from
