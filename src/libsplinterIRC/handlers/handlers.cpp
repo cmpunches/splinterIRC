@@ -165,45 +165,6 @@ void splinterClient::handle_UNKNOWN( IRCEventEnvelope& event )
     std::cerr << event.to_json(1, 4, 1) << std::endl;
 }
 
-/*
- * {
-    "_command": "PRIVMSG",
-    "_postprocessed": "false",
-    "_prefix": "phanes!~phanes@vdaaabp6wfeza.irc",
-    "_raw": ":phanes!~phanes@vdaaabp6wfeza.irc PRIVMSG #techrights :hope all you brits here enjoyed work today",
-    "host": "vdaaabp6wfeza.irc",
-    "ident": "~phanes",
-    "message": "hope all you brits here enjoyed work today",
-    "nick": "phanes",
-    "sender": "phanes!~phanes@vdaaabp6wfeza.irc",
-    "server": "irc.techrights.org",
-    "target": "#techrights",
-    "type": "S_CHANNEL_MESSAGE",
-    "_autoextract": [
-        "#techrights",
-        "hope all you brits here enjoyed work today"
-    ]
-}
- {
-    "_command": "PRIVMSG",
-    "_postprocessed": "false",
-    "_prefix": "phanes!~phanes@vdaaabp6wfeza.irc",
-    "_raw": ":phanes!~phanes@vdaaabp6wfeza.irc PRIVMSG bagirabot0 :!join 0 #techrights",
-    "host": "vdaaabp6wfeza.irc",
-    "ident": "~phanes",
-    "message": "!join 0 #techrights",
-    "nick": "phanes",
-    "sender": "phanes!~phanes@vdaaabp6wfeza.irc",
-    "server": "irc.techrights.org",
-    "target": "bagirabot0",
-    "type": "S_PRIVATE_MESSAGE",
-    "_autoextract": [
-        "bagirabot0",
-        "!join 0 #techrights"
-    ]
-}
- */
-
 void splinterClient::handle_pipes(IRCEventEnvelope &PRIVMSG_event)
 {
     // do the pipe stuff
