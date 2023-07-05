@@ -1,10 +1,5 @@
 #include "../client/client.h"
 
-// TODO add a command for a two-way bridge between channels or PMs -- include cross-splinter support
-// TODO add a command for a one-way bridge between channels or PMs -- include cross-splinter support
-
-
-
 // checks if the supplied username is the owner
 bool splinterClient::is_owner( const std::string &username )
 {
@@ -156,6 +151,12 @@ void splinterClient::handle_command_help(std::string& sender, std::string& comma
     if (subcommand == "raw" )
     {
         prompt_help_raw(sender);
+        return;
+    }
+
+    if (subcommand == "pipe" )
+    {
+        prompt_help_pipe(sender);
         return;
     }
 
@@ -409,6 +410,99 @@ void splinterClient::handle_command_raw( std::string& sender, std::string& comma
     }
 }
 
+void splinterClient::handle_command_pipe( std::string& sender, std::string& command )
+{
+    // !pipe <id> <target> <message>
+    std::string first_word = get_word(1, command );
+
+    if ( first_word != "pipe" )
+    {
+        return;
+    }
+
+    std::string subcommand = get_word(2, command );
+
+    if ( subcommand == "create" )
+    {
+        // !pipe create <sender_id> <sender_source> <target_id> <target_source> <preserve_sender>
+        std::string sender_id = get_word(3, command );
+        std::string sender_source = get_word(4, command );
+
+        std::string target_id = get_word(5, command );
+        std::string target_source = get_word(6, command );
+
+        bool preserve_sender_bool = true;
+        std::string preserve_sender = get_word(7, command );
+
+        if ( sender_id.empty() || sender_source.empty() || target_id.empty() || target_source.empty() || preserve_sender.empty() )
+        {
+            prompt_help_pipe(sender);
+            return;
+        }
+
+        if ( preserve_sender == "true" )
+        {
+            preserve_sender_bool = true;
+        }
+        if ( preserve_sender == "false" )
+        {
+            preserve_sender_bool = false;
+        }
+
+        pipe_add( sender, std::stoi(sender_id), sender_source, std::stoi(target_id), target_source, preserve_sender_bool );
+    }
+
+    if ( subcommand == "list" )
+    {
+        pipe_list( sender );
+    }
+
+    if ( subcommand == "destroy" )
+    {
+        std::string pipeID = get_word(3, command );
+        if ( pipeID.empty() )
+        {
+            prompt_help_pipe(sender);
+            return;
+        } else {
+            pipe_destroy( sender, std::stoi(pipeID) );
+        }
+    }
+
+
+}
+
+// Method to add an entry to the shared property
+void splinterClient::pipe_add(std::string reply_to, int source_splinter, const std::string& source_name, int target_splinter, const std::string& target_name, bool preserve_sender )
+{
+    // Generate a new pipeID by incrementing the size of the map
+    std::string pipeID = std::to_string(++last_pipe_id_);
+    pipes_[pipeID] = std::make_tuple(source_splinter, source_name, target_splinter, target_name, preserve_sender);
+    send_private_message( reply_to, pipeID + ": "
+        + std::to_string(source_splinter) + "/" + source_name
+        + " -> " + std::to_string(target_splinter)
+        + "/" + target_name );
+}
+
+// Method to print the shared property
+void splinterClient::pipe_list( std::string reply_to )
+{
+    for (const auto& entry : pipes_)
+    {
+        send_private_message(reply_to, entry.first + ": "
+                  + std::to_string(std::get<0>(entry.second))
+                  + "/" + std::get<1>(entry.second)
+                  + " -> " + std::to_string(std::get<2>(entry.second))
+                  + "/" + std::get<3>(entry.second) );
+    }
+}
+
+void splinterClient::pipe_destroy(std::string reply_to, int pipeID)
+{
+    pipes_.erase(std::to_string(pipeID));
+    send_private_message(reply_to, "Pipe ID '" + std::to_string(pipeID) + "' destroyed");
+}
+
 void splinterClient::handle_command( IRCEventEnvelope& event )
 {
     std::string message = event.get_scalar_attribute( "message" );
@@ -416,6 +510,11 @@ void splinterClient::handle_command( IRCEventEnvelope& event )
 
     if ( message[0] != '!' )
     {
+        if ( event.get_scalar_attribute("target") != nick_ )
+        {
+            // if it's not a command, and it's not from Hamato Yoshi, ignore it in this context.
+            return;
+        }
         // if it's from Hamato Yoshi, and it's not a command, print help
         if ( has_valid_session( sender ) )
         {
@@ -445,12 +544,13 @@ void splinterClient::handle_command( IRCEventEnvelope& event )
     handle_command_join(        sender, command );
     handle_command_say(         sender, command );
     handle_command_raw(         sender, command );
+    handle_command_pipe(        sender, command );
 }
 
 void splinterClient::prompt_help_general(std::string& reply_to )
 {
     send_private_message( reply_to, "I handle several commands:" );
-    send_private_message( reply_to, "!help, !quit, !splinter, !list, !destroy !join !say !raw !auth" );
+    send_private_message( reply_to, "!help, !quit, !splinter, !list, !destroy !join !say !raw !auth !pipe" );
     send_private_message( reply_to, "For more information on a specific command, type '!help <command>'" );
 }
 
@@ -461,6 +561,37 @@ void splinterClient::prompt_help_splinter( std::string& reply_to )
     send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword" );
     send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword true myusername mypassword" );
     send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword false" );
+}
+
+void splinterClient::prompt_help_pipe( std::string& reply_to )
+{
+    send_private_message( reply_to, "Manage pipes." );
+    send_private_message( reply_to, "Subcommands are: create, list, destroy" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "create:" );
+    send_private_message( reply_to, "Pipes one source to one target.  Use two for bi-directional support." );
+    send_private_message( reply_to, "pipe create <splinter_id> <source> <splinter_id> <target> <preserve_sender>" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "Example: !pipe create 1 #debian 0 bagira true" );
+    send_private_message( reply_to, "Example: !pipe create 0 bagira 1 #debian false" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "Example: !pipe create 0 #darkhorse 0 #darkhorse-banned true" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "Example: !pipe create 0 #channel1 1 #channel2 true" );
+    send_private_message( reply_to, "Example: !pipe create 1 #channel2 0 #channel1 true" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "Example: !pipe create 0 dummyuser1 0 dummyuser2 false" );
+    send_private_message( reply_to, "Example: !pipe create 0 dummyuser2 0 dummyuser1 false" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "Note: The <preserve_sender> is a boolean indicating whether or not to preserve the context of the message or not (splinterID, sending user/channel)." );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "list:" );
+    send_private_message( reply_to, "Lists the pipes by pipe ID." );
+    send_private_message( reply_to, "pipe list" );
+    send_private_message( reply_to, " " );
+    send_private_message( reply_to, "destroy:" );
+    send_private_message( reply_to, "Destroys a pipe by pipe ID." );
+    send_private_message( reply_to, "pipe destroy <pipe_id>" );
 }
 
 void splinterClient::prompt_help_list( std::string& reply_to )
@@ -479,8 +610,6 @@ void splinterClient::prompt_help_destroy( std::string& reply_to )
 
 void splinterClient::prompt_help_join( std::string& reply_to )
 {
-    // TODO track channels im a member of with a vector
-    // TODO use handlers to track channels im a member of
     send_private_message( reply_to, "Joins a channel." );
     send_private_message( reply_to, "!join <id> <channel>" );
 }
@@ -541,9 +670,6 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
 }
 
 // TODO: add a command to list channels the splinter is in
-// TODO: add current channels tracker to splinterClient
 // TODO: add a command to part a channel
 // TODO: add a command to change topic on a channel
-// TODO: add maintenance of current channels list to handlers (join/part/kicked)
-
-// TODO: add support for sending an event to an AMQP exchange
+// TODO: add support for sending an event to an AMQP exchange or to a FIFO for dedicated component

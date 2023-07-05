@@ -105,7 +105,7 @@ void splinterClient::enqueue_event(IRCEventEnvelope event)
 
 void splinterClient::execute_action(IRCActionEnvelope &action)
 {
-    usleep(250000);
+    usleep(125000);
     //std::cout << action.actor_id << ": Executing action: " << action.action << std::endl;
     auto it = clients_.find(std::to_string( action.actor_id ));
     if (it == clients_.end())

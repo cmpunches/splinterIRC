@@ -165,11 +165,145 @@ void splinterClient::handle_UNKNOWN( IRCEventEnvelope& event )
     std::cerr << event.to_json(1, 4, 1) << std::endl;
 }
 
+/*
+ * {
+    "_command": "PRIVMSG",
+    "_postprocessed": "false",
+    "_prefix": "phanes!~phanes@vdaaabp6wfeza.irc",
+    "_raw": ":phanes!~phanes@vdaaabp6wfeza.irc PRIVMSG #techrights :hope all you brits here enjoyed work today",
+    "host": "vdaaabp6wfeza.irc",
+    "ident": "~phanes",
+    "message": "hope all you brits here enjoyed work today",
+    "nick": "phanes",
+    "sender": "phanes!~phanes@vdaaabp6wfeza.irc",
+    "server": "irc.techrights.org",
+    "target": "#techrights",
+    "type": "S_CHANNEL_MESSAGE",
+    "_autoextract": [
+        "#techrights",
+        "hope all you brits here enjoyed work today"
+    ]
+}
+ {
+    "_command": "PRIVMSG",
+    "_postprocessed": "false",
+    "_prefix": "phanes!~phanes@vdaaabp6wfeza.irc",
+    "_raw": ":phanes!~phanes@vdaaabp6wfeza.irc PRIVMSG bagirabot0 :!join 0 #techrights",
+    "host": "vdaaabp6wfeza.irc",
+    "ident": "~phanes",
+    "message": "!join 0 #techrights",
+    "nick": "phanes",
+    "sender": "phanes!~phanes@vdaaabp6wfeza.irc",
+    "server": "irc.techrights.org",
+    "target": "bagirabot0",
+    "type": "S_PRIVATE_MESSAGE",
+    "_autoextract": [
+        "bagirabot0",
+        "!join 0 #techrights"
+    ]
+}
+ */
+
+void splinterClient::handle_pipes(IRCEventEnvelope &PRIVMSG_event)
+{
+    // do the pipe stuff
+    std::string source_splinter_id;
+    std::string source_sender;
+    std::string target_splinter_id;
+    std::string target_receiver;
+    int pipe_id;
+    bool preserve;
+    bool routable = false;
+
+    // for each pipe in pipes_
+    for (const auto& entry : pipes_)
+    {
+        pipe_id = std::stoi( entry.first );
+
+        // get the values representing the pipe
+        source_splinter_id = std::to_string(std::get<0>(entry.second));
+        source_sender = std::get<1>(entry.second);
+        target_splinter_id = std::to_string(std::get<2>(entry.second));
+        target_receiver = std::get<3>(entry.second);
+        preserve = std::get<4>(entry.second);
+
+        // load up our clients to orchestrate
+        auto sourceClient = clients_.find(source_splinter_id);
+        auto targetClient = clients_.find(target_splinter_id);
+
+        if ( sourceClient == clients_.end())
+        {
+            send_private_message( owner_, "Source client not found for pipe: " + entry.first );
+            pipe_destroy( owner_, pipe_id );
+            continue;
+        }
+
+        if ( targetClient == clients_.end())
+        {
+            send_private_message( owner_, "Target client not found for pipe: " + entry.first );
+            pipe_destroy( owner_, pipe_id );
+            continue;
+        }
+
+        // is this splinter client processing the event the source of the pipe?
+        if ( splinter_id_ != std::stoi(source_splinter_id) )
+        {
+            // not the source, so skip this pipe
+            continue;
+        }
+
+        std::string origin;
+        if ( PRIVMSG_event.get_type() == IRCEventEnvelope::Type::S_CHANNEL_MESSAGE )
+        {
+            if ( source_sender == PRIVMSG_event.get_scalar_attribute("target") )
+            {
+                origin = PRIVMSG_event.get_scalar_attribute("target");
+                routable = true;
+            } else {
+                continue;
+            }
+        }
+
+        if ( PRIVMSG_event.get_type() == IRCEventEnvelope::Type::S_PRIVATE_MESSAGE )
+        {
+            if ( source_sender == PRIVMSG_event.get_scalar_attribute("nick") )
+            {
+                origin = PRIVMSG_event.get_scalar_attribute("nick");
+                routable = true;
+            } else {
+                continue;
+            }
+        }
+
+        if ( PRIVMSG_event.get_scalar_attribute("message")[0] == '!' )
+        {
+            // it's a command so don't relay it
+            routable = false;
+            continue;
+        }
+
+        if ( routable )
+        {
+            if ( preserve )
+            {
+                // preserve the context
+                // send the message to the target
+                targetClient->second->send_private_message( target_receiver, source_splinter_id + "/" + origin + "/" + PRIVMSG_event.get_scalar_attribute("nick") + ": " + PRIVMSG_event.get_scalar_attribute("message") );
+            } else {
+                // don't preserve the context
+                // send the message to the target
+                targetClient->second->send_private_message( target_receiver, PRIVMSG_event.get_scalar_attribute("message") );
+            }
+        }
+    }
+}
+
 void splinterClient::handle_S_CHANNEL_MESSAGE(IRCEventEnvelope& event)
 {
     report_event(event);
     handle_ctcp( event );
     handle_command( event );
+    handle_pipes( event );
 }
 
 void splinterClient::handle_S_PRIVATE_MESSAGE(IRCEventEnvelope &event)
@@ -177,6 +311,7 @@ void splinterClient::handle_S_PRIVATE_MESSAGE(IRCEventEnvelope &event)
     report_event(event);
     handle_ctcp( event );
     handle_command( event );
+    handle_pipes( event );
 }
 
 void splinterClient::handle_ctcp_version(IRCEventEnvelope& event)

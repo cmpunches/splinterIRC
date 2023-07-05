@@ -1,6 +1,8 @@
 #include "client.h"
 
 std::map<std::string, std::shared_ptr<splinterClient>> splinterClient::clients_;
+std::map<std::string, std::tuple<int, std::string, int, std::string, bool>> splinterClient::pipes_;
+int splinterClient::last_pipe_id_ = 0;
 
 int splinterClient::get_next_id() {
     int next_id = -1;
@@ -96,7 +98,7 @@ bool splinterClient::is_in_channel( const int& splinter_id, std::string& channel
     return false;
 }
 
-void splinterClient::connect()
+void splinterClient::connect_plain()
 {
     struct addrinfo hints;
     std::memset(&hints, 0, sizeof(hints));
@@ -149,6 +151,26 @@ void splinterClient::connect()
         register_user(nick_);
     }
 }
+
+void splinterClient::connect_ssl()
+{}
+
+void splinterClient::connect()
+{
+    // Detect if SSL is required
+    bool ssl_required = false;
+
+    // ... (your code to detect if SSL is required)
+
+    // Route to the appropriate connect function
+    if (ssl_required) {
+        connect_ssl();
+    } else {
+        connect_plain();
+    }
+}
+
+
 
 void splinterClient::send( const std::string& message )
 {

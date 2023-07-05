@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 // the client that will be controlled by commands via PM on the control server
 class splinterClient : public std::enable_shared_from_this<splinterClient> {
@@ -59,7 +61,12 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         const std::string& get_server() const;
 
         // connect to the targeted server
+        // router method
         void connect();
+        // connect to the targeted server
+        void connect_plain();
+        // connect to the targeted server
+        void connect_ssl();
 
         // internal use for managing the splinter index
         void add_to_clients();
@@ -95,9 +102,19 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_command_quit( std::string& sender, std::string& command );
         void handle_command_splinter( std::string& sender, std::string& command );
 
+        // maintains an index of splinters
         static std::map<std::string, std::shared_ptr<splinterClient>> clients_;
 
-        // get the current splinter id
+        // pipes
+        // pipeID, (source_id, source_sender, target_id, target_sender)
+        static std::map<std::string, std::tuple<int, std::string, int, std::string, bool>> pipes_;
+        static int last_pipe_id_;
+        void pipe_add(std::string reply_to, int source_splinter, const std::string& source_name, int target_splinter, const std::string& target_name, bool preserve_sender );
+        void pipe_list( std::string reply_to );
+        void pipe_destroy( std::string reply_to, int pipeID );
+
+
+    // get the current splinter id
         const int get_id() const;
 
         // current splinter id
@@ -132,6 +149,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void prompt_help_raw(std::string& reply_to );
         void prompt_help_auth(std::string& reply_to );
         void prompt_help_quit(std::string& reply_to );
+        void prompt_help_pipe(std::string& reply_to );
 
         void handle_command( IRCEventEnvelope& event );
         void handle_command_list( std::string& sender, std::string& command );
@@ -139,6 +157,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_command_join( std::string& sender, std::string& command );
         void handle_command_say( std::string& sender, std::string& command );
         void handle_command_raw( std::string& sender, std::string& command );
+        void handle_command_pipe( std::string& sender, std::string& command );
 
         void handle_unassociated_event( IRCEventEnvelope& event );
         void handle_UNKNOWN( IRCEventEnvelope& event );
@@ -296,6 +315,8 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_S_RPL_CAP_LS( IRCEventEnvelope& event );
         void handle_S_RPL_CAP_ACK( IRCEventEnvelope& event );
         void handle_AUTHENTICATE( IRCEventEnvelope& event );
+
+        void handle_pipes( IRCEventEnvelope& event );
 
         void report_event( IRCEventEnvelope& event );
 
