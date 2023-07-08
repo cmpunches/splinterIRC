@@ -49,3 +49,15 @@ std::vector<std::string> split(const std::string& str, char delimiter)
     }
     return result;
 }
+
+bool is_num_or_any(std::string str) {
+    if (str == "*") {
+        return true;
+    }
+    for (char c : str) {
+        if (!std::isdigit(c)) {
+            return false;
+        }
+    }
+    return true;
+}

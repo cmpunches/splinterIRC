@@ -22,6 +22,7 @@
 #include <vector>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <cctype>
 
 // the client that will be controlled by commands via PM on the control server
 class splinterClient : public std::enable_shared_from_this<splinterClient> {
