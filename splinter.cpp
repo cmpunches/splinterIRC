@@ -6,7 +6,7 @@
 #include <getopt.h>
 
 void show_usage(const std::string& program_name) {
-    std::cout << "Usage: " << program_name << " -s|--server SERVER -p|--port PORT -n|--nick NICK -w||--password PASSWORD [ -S|--use-sasl -u|--sasl-username SASL_USERNAME -k|--sasl-password SASL_PASSWORD ]" << std::endl
+    std::cout << "Usage: " << program_name << " -s|--server SERVER -p|--port PORT -n|--nick NICK -w||--password PASSWORD [ -e|--ssl [ -f|--strict-validation ] ][ -S|--use-sasl -u|--sasl-username SASL_USERNAME -k|--sasl-password SASL_PASSWORD ]" << std::endl
               << std::endl
               << "Required options:" << std::endl
               << "  -s, --server=ADDR        Server address" << std::endl
@@ -18,6 +18,8 @@ void show_usage(const std::string& program_name) {
               << "  -u, --sasl-username=USER SASL username" << std::endl
               << "  -k, --sasl-password=PASS SASL password" << std::endl
               << "  -S, --use-sasl           Use SASL authentication" << std::endl
+              << "  -e, --ssl                Use SSL" << std::endl
+              << "  -f, --strict-validation  Strict SSL validation" << std::endl
               << "  -v, --verbose            Verbose output" << std::endl
               << "  -V, --version            Show version information" << std::endl
               << "  -h, --help               Show this help screen" << std::endl << std::endl;
@@ -33,10 +35,11 @@ int main(int argc, char *argv[])
     std::string sasl_username;
     std::string sasl_password;
     bool use_sasl = false;
-
+    bool use_ssl = false;
+    bool strict_validation = false;
     bool verbose = false;
 
-    const char* const short_opts = "s:p:n:w:u:k:SvVh";
+    const char* const short_opts = "s:p:n:w:u:k:SefvVh";
     const option long_opts[] = {
             {"server", required_argument, nullptr, 's'},
             {"port", required_argument, nullptr, 'p'},
@@ -45,6 +48,8 @@ int main(int argc, char *argv[])
             {"sasl-username", required_argument, nullptr, 'u'},
             {"sasl-password", required_argument, nullptr, 'k'},
             {"use-sasl", no_argument, nullptr, 'S'},
+            {"ssl", no_argument, nullptr, 'e'},
+            {"strict-validation", no_argument, nullptr, 'f'},
             {"verbose", no_argument, nullptr, 'v'},
             {"version", no_argument, nullptr, 'V'},
             {"help", no_argument, nullptr, 'h'},
@@ -80,6 +85,12 @@ int main(int argc, char *argv[])
                 break;
             case 'S':
                 use_sasl = true;
+                break;
+            case 'e':
+                use_ssl = true;
+                break;
+            case 'f':
+                strict_validation = true;
                 break;
             case 'v':
                 verbose = true;
@@ -123,6 +134,9 @@ int main(int argc, char *argv[])
         std::cout << "Use SASL:\t" << (use_sasl ? "YES" : "NO") << std::endl;
         std::cout << "SASL Username:\t" << sasl_username << std::endl;
         std::cout << "SASL Password:\t" << sasl_password << std::endl << std::endl;
+        std::cout << std::endl;
+        std::cout << "Use SSL:\t" << (use_ssl ? "YES" : "NO") << std::endl;
+        std::cout << "Strict Validation:\t" << (strict_validation ? "YES" : "NO") << std::endl << std::endl;
     }
 
 
@@ -152,6 +166,8 @@ int main(int argc, char *argv[])
                                                        use_sasl,
                                                        sasl_username,
                                                        sasl_password,
+                                                       use_ssl,
+                                                       strict_validation,
                                                        verbose);
         master->connect();
         master->add_to_clients();

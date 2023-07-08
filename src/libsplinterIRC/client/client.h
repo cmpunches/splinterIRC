@@ -34,6 +34,8 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
                 const bool use_sasl,
                 const std::string& sasl_username,
                 const std::string& sasl_password,
+                const bool use_ssl,
+                const bool strict_ssl,
                 const bool verbose
         );
         ~splinterClient();
@@ -66,7 +68,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         // connect to the targeted server
         void connect_plain();
         // connect to the targeted server
-        void connect_ssl();
+        void connect_ssl( bool require_key_validation );
 
         // internal use for managing the splinter index
         void add_to_clients();
@@ -74,9 +76,9 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         // main loop
         void run_event_loop();
 
-
-
     private:
+        SSL * ssl_;
+
         std::vector<std::string> current_channels;
         void channels_del(std::string& channel );
         void channels_add(std::string& channel );
@@ -353,6 +355,9 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         // the username and password to use for SASL auth
         std::string sasl_username_;
         std::string sasl_password_;
+
+        bool use_ssl_;
+        bool strict_ssl_;
 
         // to_json debugging info
         bool verbose_;

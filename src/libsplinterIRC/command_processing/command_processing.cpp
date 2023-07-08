@@ -198,9 +198,13 @@ void splinterClient::handle_command_quit(std::string& sender, std::string& comma
 
 void splinterClient::handle_command_splinter(std::string& sender, std::string& command )
 {
+    // TODO: This syntax is garbage.  Clean this up.
+    bool use_sslb;
+    bool use_strict_sslb;
+
     std::string first_word = get_word( 1, command );
 
-    // splinter <server> <port> <nick> <splinter_password> [<use_sasl> <sasl_username> <sasl_password>]
+    // splinter <server> <port> <nick> <splinter_password> <use_ssl> <strict_ssl> <use_sasl> [<sasl_username> <sasl_password>]
 
     if ( !( first_word == "splinter" ) )
     {
@@ -212,16 +216,41 @@ void splinterClient::handle_command_splinter(std::string& sender, std::string& c
     std::string port = get_word( 3, command );
     std::string nick = get_word( 4, command );
     std::string child_pass = get_word( 5, command );
-    std::string optional_use_sasl = get_word( 6, command );
-    std::string optional_sasl_username = get_word( 7, command );
-    std::string optional_sasl_password = get_word( 8, command );
+    std::string use_ssl = get_word( 6, command );
+    std::string use_strict_ssl = get_word( 7, command );
+    std::string optional_use_sasl = get_word( 8, command );
+    std::string optional_sasl_username = get_word( 9, command );
+    std::string optional_sasl_password = get_word( 10, command );
     bool client_uses_sasl = false;
+
 
     // check if command arguments were supplied correctly
     if ( server.empty() ) { return; }
     if ( port.empty() ) { return; }
     if ( nick.empty() ) { return; }
     if ( child_pass.empty() ) { return; }
+    if ( use_ssl.empty() ) { return; }
+    if ( use_strict_ssl.empty() ) { return; }
+
+    if ( use_ssl == "true" )
+    {
+        use_sslb = true;
+    }
+
+    if ( use_ssl == "false" )
+    {
+        use_sslb = false;
+    }
+
+    if ( use_strict_ssl == "true" )
+    {
+        use_strict_sslb = true;
+    }
+
+    if ( use_strict_ssl == "false" )
+    {
+        use_strict_sslb = false;
+    }
 
     if (! optional_use_sasl.empty() )
     {
@@ -254,6 +283,8 @@ void splinterClient::handle_command_splinter(std::string& sender, std::string& c
             client_uses_sasl,
             optional_sasl_username,
             optional_sasl_password,
+            use_sslb,
+            use_strict_sslb,
             verbose_
     );
 
@@ -556,11 +587,13 @@ void splinterClient::prompt_help_general(std::string& reply_to )
 
 void splinterClient::prompt_help_splinter( std::string& reply_to )
 {
+    // splinter <server> <port> <nick> <splinter_password> <use_ssl> <strict_ssl> <use_sasl> [<sasl_username> <sasl_password>]
+
     send_private_message( reply_to, "Creates a new splinter client." );
-    send_private_message( reply_to, "splinter <server> <port> <nick> <splinter_password> [<use_sasl> <sasl_username> <sasl_password>]" );
-    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword" );
-    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword true myusername mypassword" );
-    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword false" );
+    send_private_message( reply_to, "splinter <server> <port> <nick> <splinter_password> <use_ssl> <strict_ssl> [<use_sasl> <sasl_username> <sasl_password>]" );
+    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword false false" );
+    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword true false true mysaslusername mysaslpassword" );
+    send_private_message( reply_to, "Example: !splinter irc.example.com 6667 HamatoYoshi mypassword false false" );
 }
 
 void splinterClient::prompt_help_pipe( std::string& reply_to )
@@ -655,6 +688,7 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
     auto it = clients_.find(id);
     if (it != clients_.end())
     {
+        // TODO: add pipeline for quit message
         // Send a QUIT command to the client
         it->second->quit("Bye!");
         it->second->critical_thread_failed = true;
