@@ -1,6 +1,10 @@
 #ifndef SPLINTERIRC_CLIENT_H
 #define SPLINTERIRC_CLIENT_H
 
+#include "../helpers/helpers.h"
+#include "../events/IRCEventEnvelope.h"
+#include "../actions/IRCActionEnvelope.h"
+
 #include <iostream>
 #include <string>
 #include <queue>
@@ -14,9 +18,6 @@
 #include <sstream>
 #include <map>
 #include <atomic>
-#include "../helpers/helpers.h"
-#include "../events/IRCEventEnvelope.h"
-#include "../actions/IRCActionEnvelope.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -51,8 +52,10 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void request_sasl_capability();
         void end_capabilites_negotiation();
         void whois_user( std::string nick );
+        void die();
 
         void destroy_self();
+        void set_to_fail();
 
         // register the user
         void register_user(std::string user );

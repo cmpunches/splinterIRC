@@ -73,3 +73,11 @@ void splinterClient::whois_user( std::string nick )
     IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
     enqueue_action(action);
 }
+
+// internal action to tell all threads to start to die
+void splinterClient::die()
+{
+    std::string command = "DIE";
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
+    enqueue_action(action);
+}

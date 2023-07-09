@@ -51,7 +51,7 @@ void splinterClient::handle_S_RPL_CAP_ACK( IRCEventEnvelope& event ) {
         enqueue_action(action);
     } else {
         std::cerr << "Received an unprocessed CAP ACK message.  Report this message as a parsing bug." << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
     }
 }
 
@@ -125,7 +125,7 @@ void splinterClient::handle_ERR_SASLFAIL( IRCEventEnvelope& event )
 {
     report_event(event);
     // SASL authentication failed
-    critical_thread_failed = true;
+    set_to_fail();
 }
 
 void splinterClient::handle_ERR_SASLTOOLONG( IRCEventEnvelope& event )
@@ -341,8 +341,7 @@ void splinterClient::handle_QUIT( IRCEventEnvelope& event )
     report_event(event);
     if ( event.get_scalar_attribute("nick") == nick_ )
     {
-        critical_thread_failed = true;
-        destroy_self();
+        die();
     }
 }
 

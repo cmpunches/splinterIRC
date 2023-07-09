@@ -55,23 +55,20 @@ splinterClient::~splinterClient()
     {
         close(socket_);
     }
-    destroy_self();
 }
+
+// TODO: Add a custom action for when the client is destroyed for thread management sanity
 
 void splinterClient::destroy_self()
 {
-    // Check if a client with the provided identifier exists
-    auto it = clients_.find( std::to_string( get_id()) );
-    if (it != clients_.end())
-    {
-        std::cerr << "Dropping splinter with ID '" << std::to_string(splinter_id_) << "'." << std::endl;
+    orientation_cond_.notify_one();
+    action_cond_.notify_one();
+
+    std::cerr << "Dropping splinter with ID '" << std::to_string(splinter_id_) << "'." << std::endl;
         // Remove the client from the clients_ member variable
         // has to be handled by manager of threads and not by deconstructor within the thread or will report a
         // "free(): double free detected in tcache 2" error
-        //clients_.erase(it);
-    } else {
-        std::cerr << "No client with id '" << std::to_string(splinter_id_) << "' found.  Report this as a bug." << std::endl;
-    }
+        clients_.erase(std::to_string(splinter_id_));
 }
 
 // called when a client is removed from a channel
@@ -114,7 +111,7 @@ void splinterClient::connect_plain()
     if (getaddrinfo(server_.c_str(), port_.c_str(), &hints, &result) != 0)
     {
         std::cerr << "Failed to resolve server address:  " << server_ << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
         return;
     }
 
@@ -136,7 +133,7 @@ void splinterClient::connect_plain()
     freeaddrinfo(result);
     if (socket_ == -1) {
         std::cerr << "Failed to connect to server" << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
         return;
     }
 
@@ -158,6 +155,12 @@ void ssl_info_callback(const SSL *ssl, int where, int ret)
     }
 }
 
+void splinterClient::set_to_fail() {
+    critical_thread_failed = true;
+    orientation_cond_.notify_all();
+    action_cond_.notify_all();
+}
+
 void splinterClient::connect_ssl( bool require_key_validation )
 {
     struct addrinfo hints;
@@ -168,7 +171,7 @@ void splinterClient::connect_ssl( bool require_key_validation )
     if (getaddrinfo(server_.c_str(), port_.c_str(), &hints, &result) != 0)
     {
         std::cerr << "Failed to resolve server address:  " << server_ << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
         return;
     }
 
@@ -190,7 +193,7 @@ void splinterClient::connect_ssl( bool require_key_validation )
     freeaddrinfo(result);
     if (socket_ == -1) {
         std::cerr << "Failed to connect to server" << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
         return;
     }
 
@@ -214,7 +217,7 @@ void splinterClient::connect_ssl( bool require_key_validation )
     SSL_set_fd(ssl_, socket_);
     if (SSL_connect(ssl_) != 1) {
         std::cerr << "Failed to establish SSL connection" << std::endl;
-        critical_thread_failed = true;
+        set_to_fail();
         return;
     }
 

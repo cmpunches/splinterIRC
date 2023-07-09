@@ -682,7 +682,7 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
         // TODO: add pipeline for quit message
         // Send a QUIT command to the client
         it->second->quit("Bye!");
-        it->second->critical_thread_failed = true;
+        it->second->set_to_fail();
         send_private_message( reply_to, "Client with id '" + id + "' disconnected." );
 
         // Remove the client from the clients_ member variable

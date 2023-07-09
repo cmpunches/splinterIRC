@@ -2,34 +2,55 @@
 
 void splinterClient::observation_loop()
 {
-    // reads raw server input delimited by newline
-    // and processes the raw irc strings into IRCEventEnvelope objects
-    // and then queues them for the processing loop
     std::string buffer;
-    while ( !critical_thread_failed )
+    while (!critical_thread_failed)
     {
         char buf[BUFSIZ];
         ssize_t n;
-        if (use_ssl_) {
+
+        // Use select() to check if data is available to be read
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(socket_, &readfds);
+        struct timeval timeout;
+        timeout.tv_sec = 1; // 1 second timeout
+        timeout.tv_usec = 0;
+        int ready = select(socket_ + 1, &readfds, nullptr, nullptr, &timeout);
+
+        if (ready == -1)
+        {
+            std::cerr << "select() failed" << std::endl;
+            set_to_fail();
+            return;
+        } else if (ready == 0) {
+            // No data available to be read, continue to next iteration
+            continue;
+        }
+
+        if (use_ssl_)
+        {
+            // use SSL
             n = SSL_read(ssl_, buf, sizeof(buf));
             if (n <= 0)
             {
                 int err = SSL_get_error(ssl_, n);
-                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+                {
                     continue;
                 }
-                std::cerr << "Failed to receive message from server." << std::endl;
+                std::cerr << "Failed to receive message from SSL-socket." << std::endl;
                 unsigned long err_code = ERR_get_error();
                 std::cerr << "SSL error: " << ERR_error_string(err_code, nullptr) << std::endl;
-                critical_thread_failed = true;
+                set_to_fail();
                 return;
             }
         } else {
+            // use plaintext
             n = recv(socket_, buf, sizeof(buf), 0);
             if (n == -1)
             {
-                std::cerr << "Failed to receive message from server." << std::endl;
-                critical_thread_failed = true;
+                std::cerr << "Failed to receive message from plaintext-socket." << std::endl;
+                set_to_fail();
                 return;
             }
             if (n == 0)
@@ -37,25 +58,25 @@ void splinterClient::observation_loop()
                 break;
             }
         }
-        buffer.append( buf, n );
+        buffer.append(buf, n);
         // Remove solitary \n characters
-        buffer.erase( std::remove( buffer.begin(), buffer.end(), '\n' ), buffer.end() );
+        buffer.erase(std::remove(buffer.begin(), buffer.end(), '\n'), buffer.end());
 
         // Find the last complete line in the buffer
-        size_t pos = buffer.rfind( '\r' );
+        size_t pos = buffer.rfind('\r');
         if (pos != std::string::npos)
         {
             // Split the buffer into complete lines and an incomplete line
-            std::string lines = buffer.substr( 0, pos );
-            buffer = buffer.substr( pos + 1 );
+            std::string lines = buffer.substr(0, pos);
+            buffer = buffer.substr(pos + 1);
 
             // Process the complete lines
-            std::istringstream stream( lines );
+            std::istringstream stream(lines);
             std::string event_line;
 
-            while ( std::getline( stream, event_line, '\r' ) )
+            while (std::getline(stream, event_line, '\r'))
             {
-                enqueue_event( IRCEventEnvelope{ event_line, server_ } );
+                enqueue_event(IRCEventEnvelope{event_line, server_});
             }
         }
     }
@@ -63,36 +84,37 @@ void splinterClient::observation_loop()
 
 void splinterClient::orientation_loop()
 {
-    // reads from the event queue and sends the events into the orientation/decision loop
-    // the orientation/decision loop is where the event handlers are mapped to actions
-    while ( !critical_thread_failed )
+    while (!critical_thread_failed)
     {
-        IRCEventEnvelope event = [&] {
-            std::unique_lock<std::mutex> lock( orientation_mutex_ );
-            orientation_cond_.wait( lock, [this] { return !orientation_queue_.empty(); } );
-            IRCEventEnvelope event = orientation_queue_.front();
-            orientation_queue_.pop();
-            return event;
-        }();
-        // maps an event to a handler, which decides upon an action to take and enqueues
-        // the action to be sent to the server
-        make_decision( event );
+        bool event_received = false;
+        IRCEventEnvelope event("", "");
+        {
+            std::unique_lock<std::mutex> lock(orientation_mutex_);
+            if (orientation_cond_.wait_for(lock, std::chrono::seconds(1), [this] { return !orientation_queue_.empty(); }))
+            {
+                event = orientation_queue_.front();
+                orientation_queue_.pop();
+                event_received = true;
+            }
+        }
+        if (event_received)
+        {
+            make_decision(event);
+        }
     }
 }
 
-void splinterClient::action_loop()
-{
-    // reads from the action queue and sends the actions to the server
-    while ( !critical_thread_failed )
+void splinterClient::action_loop() {
+    while (!critical_thread_failed)
     {
         IRCActionEnvelope action = [&] {
-            std::unique_lock<std::mutex> lock( action_mutex_ );
-            action_cond_.wait( lock, [this] { return !action_queue_.empty(); } );
+            std::unique_lock<std::mutex> lock(action_mutex_);
+            action_cond_.wait(lock, [this] { return !action_queue_.empty(); });
             IRCActionEnvelope action = action_queue_.front();
             action_queue_.pop();
             return action;
         }();
-        execute_action( action );
+        execute_action(action);
     }
 }
 
@@ -128,7 +150,17 @@ void splinterClient::execute_action( IRCActionEnvelope &action )
     if ( it == clients_.end() )
     {
         std::cerr << "Action execution failed.  Failed to find client with id: " << action.actor_id << std::endl;
+        std::cerr << "Action: " << action.action << std::endl;
         return;
     }
+
+    if ( action.action == "DIE" )
+    {
+        it->second->set_to_fail();
+        it->second->destroy_self();
+        std::cerr << "Client " << action.actor_id << " has died." << std::endl;
+        return;
+    }
+
     it->second->send( action.action );
 }
