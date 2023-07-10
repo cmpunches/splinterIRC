@@ -288,7 +288,7 @@ void splinterClient::handle_command_splinter(std::string& sender, std::string& c
     }).detach();
 
     send_private_message( sender, "New splinter spawned." );
-    send_private_message( sender, std::to_string(client->get_id()) + ": " + client->get_nick() + "@" + client->get_server() );
+    notify_owner( std::to_string(client->get_id()) + ": " + client->get_nick() + "@" + client->get_server() );
 }
 
 void splinterClient::handle_command_list( std::string& sender, std::string& command )
@@ -684,6 +684,7 @@ void splinterClient::destroy_client( const std::string& reply_to, const std::str
         it->second->quit("Bye!");
         it->second->set_to_fail();
         send_private_message( reply_to, "Client with id '" + id + "' disconnected." );
+        notify_owner( "Client with id '" + id + "' disconnected.");
 
         // Remove the client from the clients_ member variable
         clients_.erase(it);

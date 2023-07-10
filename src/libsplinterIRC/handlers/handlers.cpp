@@ -341,6 +341,8 @@ void splinterClient::handle_QUIT( IRCEventEnvelope& event )
     report_event(event);
     if ( event.get_scalar_attribute("nick") == nick_ )
     {
+        notify_owner( std::to_string( splinter_id_ ) + ": <" + event.get_scalar_attribute("server") + "> " + event.get_scalar_attribute("message") );
+        notify_owner( std::to_string( splinter_id_) + ": Died." );
         die();
     }
 }
@@ -396,6 +398,7 @@ void splinterClient::handle_INVITE( IRCEventEnvelope& event )
 void splinterClient::handle_ERROR( IRCEventEnvelope& event )
 {
     report_event(event);
+
 }
 
 void splinterClient::handle_RPL_WELCOME( IRCEventEnvelope& event )

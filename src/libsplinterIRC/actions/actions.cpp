@@ -81,3 +81,10 @@ void splinterClient::die()
     IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
     enqueue_action(action);
 }
+
+// send the master controller a private message
+void splinterClient::notify_owner( std::string message )
+{
+    auto client = clients_.find( std::to_string(0) );
+    client->second->send_private_message( client->second->owner_, message );
+}

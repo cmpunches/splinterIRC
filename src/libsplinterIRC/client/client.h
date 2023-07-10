@@ -53,6 +53,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void end_capabilites_negotiation();
         void whois_user( std::string nick );
         void die();
+        void notify_owner( std::string message );
 
         void destroy_self();
         void set_to_fail();
