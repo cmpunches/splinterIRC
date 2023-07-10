@@ -660,6 +660,20 @@ void IRCEventEnvelope::postprocess_RPL_STATSDLINE()
     set_attribute( "_postprocessed", "true" );
 }
 
+void IRCEventEnvelope::postprocess_RPL_NEEDREGGEDNICK() {
+    std::string message = autoextract_params[2];
+    set_attribute( "message", message );
+
+    std::string target = autoextract_params[0];
+    set_attribute( "target", target );
+
+    std::string channel = autoextract_params[1];
+    set_attribute( "channel", channel );
+
+    set_attribute("_postprocessed", "true");
+}
+
+
 void IRCEventEnvelope::postprocess_RPL_LUSERME()
 {}
 

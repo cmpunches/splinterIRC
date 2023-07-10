@@ -20,9 +20,6 @@ void splinterClient::set_nick( std::string nick )
     std::string command = "NICK " + nick;
     IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
     enqueue_action(action);
-
-    // TODO: this is a hack.  move this to the handler for a successful nick change.
-    nick_ = nick;
 }
 
 void splinterClient::register_user( std::string user )

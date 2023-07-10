@@ -27,56 +27,56 @@ void splinterClient::observation_loop()
             continue;
         }
 
-        if (use_ssl_)
+        if ( use_ssl_ )
         {
             // use SSL
-            n = SSL_read(ssl_, buf, sizeof(buf));
+            n = SSL_read( ssl_, buf, sizeof( buf ) );
             if (n <= 0)
             {
-                int err = SSL_get_error(ssl_, n);
-                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+                int err = SSL_get_error( ssl_, n );
+                if ( err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE )
                 {
                     continue;
                 }
                 std::cerr << "Failed to receive message from SSL-socket." << std::endl;
                 unsigned long err_code = ERR_get_error();
-                std::cerr << "SSL error: " << ERR_error_string(err_code, nullptr) << std::endl;
+                std::cerr << "SSL error: " << ERR_error_string( err_code, nullptr ) << std::endl;
                 set_to_fail();
                 return;
             }
         } else {
             // use plaintext
-            n = recv(socket_, buf, sizeof(buf), 0);
-            if (n == -1)
+            n = recv( socket_, buf, sizeof( buf ), 0 );
+            if ( n == -1 )
             {
                 std::cerr << "Failed to receive message from plaintext-socket." << std::endl;
                 set_to_fail();
                 return;
             }
-            if (n == 0)
+            if ( n == 0 )
             {
                 break;
             }
         }
-        buffer.append(buf, n);
+        buffer.append( buf, n );
         // Remove solitary \n characters
-        buffer.erase(std::remove(buffer.begin(), buffer.end(), '\n'), buffer.end());
+        buffer.erase( std::remove( buffer.begin(), buffer.end(), '\n' ), buffer.end() );
 
         // Find the last complete line in the buffer
-        size_t pos = buffer.rfind('\r');
-        if (pos != std::string::npos)
+        size_t pos = buffer.rfind( '\r' );
+        if ( pos != std::string::npos )
         {
             // Split the buffer into complete lines and an incomplete line
-            std::string lines = buffer.substr(0, pos);
-            buffer = buffer.substr(pos + 1);
+            std::string lines = buffer.substr( 0, pos );
+            buffer = buffer.substr( pos + 1 );
 
             // Process the complete lines
-            std::istringstream stream(lines);
+            std::istringstream stream( lines );
             std::string event_line;
 
-            while (std::getline(stream, event_line, '\r'))
+            while ( std::getline( stream, event_line, '\r' ) )
             {
-                enqueue_event(IRCEventEnvelope{event_line, server_});
+                enqueue_event( IRCEventEnvelope{ event_line, server_ } );
             }
         }
     }
@@ -84,10 +84,10 @@ void splinterClient::observation_loop()
 
 void splinterClient::orientation_loop()
 {
-    while (!critical_thread_failed)
+    while ( !critical_thread_failed )
     {
         bool event_received = false;
-        IRCEventEnvelope event("", "");
+        IRCEventEnvelope event( "", "" );
         {
             std::unique_lock<std::mutex> lock(orientation_mutex_);
             if (orientation_cond_.wait_for(lock, std::chrono::seconds(1), [this] { return !orientation_queue_.empty(); }))
@@ -97,7 +97,7 @@ void splinterClient::orientation_loop()
                 event_received = true;
             }
         }
-        if (event_received)
+        if ( event_received )
         {
             make_decision(event);
         }
@@ -105,10 +105,10 @@ void splinterClient::orientation_loop()
 }
 
 void splinterClient::action_loop() {
-    while (!critical_thread_failed)
+    while ( !critical_thread_failed )
     {
         IRCActionEnvelope action = [&] {
-            std::unique_lock<std::mutex> lock(action_mutex_);
+            std::unique_lock<std::mutex> lock( action_mutex_ );
             action_cond_.wait(lock, [this] { return !action_queue_.empty(); });
             IRCActionEnvelope action = action_queue_.front();
             action_queue_.pop();

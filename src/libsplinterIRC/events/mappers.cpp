@@ -126,6 +126,7 @@ IRCEventEnvelope::Type IRCEventEnvelope::verb_to_type(const std::string& token )
     } else if ( token == "474" ) { return Type::ERR_BANNEDFROMCHAN;
     } else if ( token == "475" ) { return Type::ERR_BADCHANNELKEY;
     } else if ( token == "476" ) { return Type::ERR_BADCHANMASK;
+    } else if ( token == "477" ) { return Type::RPL_NEEDREGGEDNICK;
     } else if ( token == "481" ) { return Type::ERR_NOPRIVILEGES;
     } else if ( token == "482" ) { return Type::ERR_CHANOPRIVSNEEDED;
     } else if ( token == "483" ) { return Type::ERR_CANTKILLSERVER;
@@ -191,6 +192,7 @@ std::string IRCEventEnvelope::type_to_verb(Type type) const {
         case Type::RPL_STATSUPTIME: return "RPL_STATSUPTIME";
         case Type::RPL_UMODEIS: return "RPL_UMODEIS";
         case Type::RPL_STATSDLINE: return "RPL_STATSDLINE";
+        case Type::RPL_NEEDREGGEDNICK: return "RPL_NEEDREGGEDNICK";
         case Type::RPL_LUSERCLIENT: return "RPL_LUSERCLIENT";
         case Type::RPL_LUSEROP: return "RPL_LUSEROP";
         case Type::RPL_LUSERUNKNOWN: return "RPL_LUSERUNKNOWN";
@@ -401,6 +403,9 @@ void IRCEventEnvelope::postprocess() {
             break;
         case Type::RPL_STATSDLINE:
             postprocess_RPL_STATSDLINE();
+            break;
+        case Type::RPL_NEEDREGGEDNICK:
+            postprocess_RPL_NEEDREGGEDNICK();
             break;
         case Type::RPL_LUSERCLIENT:
             postprocess_RPL_LUSERCLIENT();

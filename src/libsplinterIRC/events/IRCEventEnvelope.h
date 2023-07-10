@@ -9,24 +9,6 @@
 #include <iostream>
 #include "../helpers/helpers.h"
 
-// TODO add 477 numeric for libera representing channel requiring registered nick
-/*
- * 477 RPL_NEEDREGGEDNICK "<channel> :You need a registered nick to join that channel."
- * Unknown message command handled:
-{
-    "_command": "477",
-    "_postprocessed": "false",
-    "_prefix": "copper.libera.chat",
-    "_raw": ":copper.libera.chat 477 HamatoYoshi #debian :Cannot join channel (+r) - you need to be logged into your NickServ account",
-    "server": "irc.libera.chat",
-    "type": "UNKNOWN",
-    "_autoextract": [
-        "HamatoYoshi",
-        "#debian",
-        "Cannot join channel (+r) - you need to be logged into your NickServ account"
-    ]
-}
- */
 class IRCEventEnvelope {
     public:
         enum class Type {
@@ -71,6 +53,8 @@ class IRCEventEnvelope {
             RPL_UMODEIS,
             // non-compliant libera bullshit
             RPL_STATSDLINE,
+            RPL_NEEDREGGEDNICK,
+
             RPL_LUSERCLIENT,
             RPL_LUSEROP,
             RPL_LUSERUNKNOWN,
@@ -264,6 +248,7 @@ class IRCEventEnvelope {
         void postprocess_RPL_STATSUPTIME();
         void postprocess_RPL_UMODEIS();
         void postprocess_RPL_STATSDLINE();
+        void postprocess_RPL_NEEDREGGEDNICK();
         void postprocess_RPL_LUSERCLIENT();
         void postprocess_RPL_LUSEROP();
         void postprocess_RPL_LUSERUNKNOWN();
