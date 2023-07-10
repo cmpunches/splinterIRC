@@ -31,6 +31,125 @@ bool splinterClient::has_valid_session( std::string& sender )
     }
 }
 
+void splinterClient::handle_command( IRCEventEnvelope& event )
+{
+    std::string message = event.get_scalar_attribute( "message" );
+    std::string sender = event.get_scalar_attribute( "nick" );
+
+    if ( message[0] != '!' )
+    {
+        if ( event.get_scalar_attribute("target") != nick_ )
+        {
+            // if it's not a command, and it's not from Hamato Yoshi, ignore it in this context.
+            return;
+        }
+        // if it's from Hamato Yoshi, and it's not a command, print help
+        if ( has_valid_session( sender ) )
+        {
+            send_private_message( sender, "I don't understand that command." );
+            prompt_help_general( sender );
+        }
+        // it's not a command, ignore it.
+        return;
+    }
+
+    std::string command = message.substr(1);
+
+    // give the user an opportunity to identify
+    handle_command_authentication( sender, command );
+    // see if that was successful
+    if ( ! has_valid_session( sender ) )
+    {
+        // if not, return silently
+        return;
+    }
+
+    handle_command_help(        sender, command );
+    handle_command_quit(        sender, command );
+    handle_command_splinter(    sender, command );
+    handle_command_list(        sender, command );
+    handle_command_destroy(     sender, command );
+    handle_command_say(         sender, command );
+    handle_command_raw(         sender, command );
+    handle_command_pipe(        sender, command );
+    handle_command_channel(     sender, command );
+}
+
+void splinterClient::handle_command_channel( std::string& sender, std::string& command )
+{
+    std::string first_word =   get_word( 1, command );
+    if ( !( first_word == "channel" ) )
+    {
+        // not a channel command, return.
+        return;
+    }
+
+    std::string client_id = get_word( 2, command );
+
+    if ( client_id.empty() )
+    {
+        send_private_message( sender, "You must specify a client to send the command to." );
+        return;
+    }
+
+    std::string subcommand =  get_after_word( 2, command );
+
+    if ( client_id == "*" )
+    {
+        for ( auto it = clients_.begin(); it != clients_.end(); ++it )
+        {
+            handle_subcommand_channel( it->second, sender, subcommand );
+        }
+        return;
+    }
+
+    auto it = clients_.find( client_id );
+    if ( it == clients_.end() )
+    {
+        send_private_message( sender, "No client with '" + client_id + "' found." );
+        return;
+    }
+    handle_subcommand_channel( it->second, sender, subcommand );
+}
+
+void splinterClient::handle_subcommand_channel( std::shared_ptr<splinterClient> client, std::string& sender, std::string& subcommand )
+{
+    std::string first_word =   get_word( 1, subcommand );
+
+    if ( first_word == "join" )
+    {
+        std::string channel = get_word( 2, subcommand );
+        if ( channel.empty() || channel[0] != '#' )
+        {
+            send_private_message( sender, "You must specify a channel to join." );
+            return;
+        }
+        client->join_channel( channel );
+        return;
+    }
+
+    if ( first_word == "part" )
+    {
+        std::string channel = get_word( 2, subcommand );
+        if ( channel.empty() || channel[0] != '#' )
+        {
+            send_private_message( sender, "You must specify a channel to part." );
+            return;
+        }
+        client->part_channel( channel );
+        return;
+    }
+
+    if ( first_word == "list" )
+    {
+        for ( auto channel : client->current_channels )
+        {
+            send_private_message( sender, std::to_string( client->splinter_id_ ) + ": " + client->server_ + "/" + channel );
+        }
+        return;
+    }
+}
+
 // authenticates a user
 // only one authenticated user at a time.  that user owns the bot.
 // will create the conditions for a session if the password is valid
@@ -130,9 +249,9 @@ void splinterClient::handle_command_help(std::string& sender, std::string& comma
         return;
     }
 
-    if (subcommand == "join" )
+    if (subcommand == "channel" )
     {
-        prompt_help_join(sender);
+        prompt_help_channel(sender);
         return;
     }
 
@@ -335,58 +454,6 @@ void splinterClient::handle_command_destroy( std::string& sender, std::string& c
             return;
         } else {
             destroy_client(sender, second_word );
-        }
-    } else {
-        return;
-    }
-}
-
-void splinterClient::handle_command_join( std::string& sender, std::string& command )
-{
-    // join <id> <channel>
-    std::string subcommand = get_word(1, command );
-    if (subcommand == "join" )
-    {
-        std::string id = get_word(2, command );
-        if ( id.empty() )
-        {
-            prompt_help_join(sender);
-            return;
-        } else {
-            if (! is_num_or_any( id ))
-            {
-                prompt_help_join(sender);
-                return;
-            }
-            std::string channel = get_word(3, command );
-            if ( channel.empty() )
-            {
-                prompt_help_join(sender);
-                return;
-            }
-
-            if ( id == "*" )
-            {
-                for (const auto& client_pair : clients_) {
-                    const auto& this_id = client_pair.first;
-                    const auto& client = client_pair.second;
-                    if ( client->get_id() == 0 ) { continue; }
-                    client->join_channel(channel);
-                    send_private_message(sender, std::to_string(client->get_id()) + ": joined channel " + channel );
-                }
-                return;
-            } else {
-                // Check if a client with the provided identifier exists
-                auto it = clients_.find(id);
-                if (it != clients_.end())
-                {
-                    // Send the JOIN command to the specified client
-                    it->second->join_channel(channel);
-                    send_private_message(sender, std::to_string(it->second->get_id()) + ": joined channel " + channel );
-                } else {
-                    send_private_message(sender, "No client with id '" + id + "' found" );
-                }
-            }
         }
     } else {
         return;
@@ -615,60 +682,18 @@ void splinterClient::pipe_destroy(std::string reply_to, int pipeID)
     send_private_message(reply_to, "Pipe ID '" + std::to_string(pipeID) + "' destroyed");
 }
 
-void splinterClient::handle_command( IRCEventEnvelope& event )
-{
-    std::string message = event.get_scalar_attribute( "message" );
-    std::string sender = event.get_scalar_attribute( "nick" );
 
-    if ( message[0] != '!' )
-    {
-        if ( event.get_scalar_attribute("target") != nick_ )
-        {
-            // if it's not a command, and it's not from Hamato Yoshi, ignore it in this context.
-            return;
-        }
-        // if it's from Hamato Yoshi, and it's not a command, print help
-        if ( has_valid_session( sender ) )
-        {
-            send_private_message( sender, "I don't understand that command." );
-            prompt_help_general( sender );
-        }
-        // it's not a command, ignore it.
-        return;
-    }
-
-    std::string command = message.substr(1);
-
-    // give the user an opportunity to identify
-    handle_command_authentication( sender, command );
-    // see if that was successful
-    if ( ! has_valid_session( sender ) )
-    {
-        // if not, return silently
-        return;
-    }
-
-    handle_command_help(        sender, command );
-    handle_command_quit(        sender, command );
-    handle_command_splinter(    sender, command );
-    handle_command_list(        sender, command );
-    handle_command_destroy(     sender, command );
-    handle_command_join(        sender, command );
-    handle_command_say(         sender, command );
-    handle_command_raw(         sender, command );
-    handle_command_pipe(        sender, command );
-}
 
 void splinterClient::list_clients( const std::string& reply_to )
 {
-    for (const auto& client_pair : clients_) {
+    for ( const auto& client_pair : clients_ ) {
         const auto& id = client_pair.first;
         const auto& client = client_pair.second;
         if ( client->splinter_id_ == splinter_id_ )
         {
-            send_private_message( reply_to, "'" + id + "': '" + client->get_nick() + "@"  + client->get_server() + "' (ME)");
+            send_private_message( reply_to, "'" + id + "': '" + client->get_nick() + "@"  + client->get_server() + "' (ME)" );
         } else {
-            send_private_message( reply_to, "'" + id + "': '" + client->get_nick()+ "@" + client->get_server() + "'");
+            send_private_message( reply_to, "'" + id + "': '" + client->get_nick()+ "@" + client->get_server() + "'" );
         }
     }
 }

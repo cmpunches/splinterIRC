@@ -178,7 +178,7 @@ class IRCEventEnvelope {
         };
 
         // constructor for event envelope
-        IRCEventEnvelope(const std::string& raw, const std::string& server );
+        IRCEventEnvelope(const std::string& raw, const std::string& server, std::string client_id );
 
         // turn the type enum into a string representation
         std::string type_to_verb(Type type) const;
@@ -204,6 +204,8 @@ class IRCEventEnvelope {
 
         // get the json representation of the event type
         std::string to_json(bool pretty = false, int indent = 4, bool debug = false ) const;
+
+        std::string client_id_;
 
     private:
         // basic parser to extract the verb and parameters

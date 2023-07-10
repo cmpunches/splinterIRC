@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <fstream>
 #include "src/libsplinterIRC/events/IRCEventEnvelope.h"
+#include <cctype>
 
 int main() {
     std::ifstream file("parser_tests.txt");
@@ -14,8 +15,9 @@ int main() {
     }
     std::string line;
     while (std::getline(file, line)) {
-        IRCEventEnvelope event(line, "testserver" );
-        std::cout << event.to_json(1, 4) << std::endl;
+        std::string client_id = "0";
+        IRCEventEnvelope event(line, "testserver", client_id );
+        std::cout << event.to_json(1, 4, 1) << std::endl;
     }
     return 0;
 }

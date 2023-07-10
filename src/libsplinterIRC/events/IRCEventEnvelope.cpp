@@ -1,6 +1,6 @@
 #include "IRCEventEnvelope.h"
 
-IRCEventEnvelope::IRCEventEnvelope(const std::string& raw, const std::string& server ) {
+IRCEventEnvelope::IRCEventEnvelope(const std::string& raw, const std::string& server, std::string client_id ): client_id_(client_id) {
     // set the server attribute so that event processors know which server this event came from
     set_attribute( "server", server );
     set_attribute( "_raw", raw );

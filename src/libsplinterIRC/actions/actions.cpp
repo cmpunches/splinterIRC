@@ -8,6 +8,13 @@ void splinterClient::join_channel( std::string channel )
     enqueue_action(action);
 }
 
+void splinterClient::part_channel( std::string channel )
+{
+    std::string command = "PART " + channel;
+    IRCActionEnvelope action = IRCActionEnvelope( get_id() , command );
+    enqueue_action(action);
+}
+
 void splinterClient::send_private_message( std::string nick, std::string message )
 {
     std::string command = "PRIVMSG " + nick + " :" + message;

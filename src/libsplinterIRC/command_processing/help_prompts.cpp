@@ -3,8 +3,18 @@
 void splinterClient::prompt_help_general(std::string& reply_to )
 {
     send_private_message( reply_to, "I handle several commands:" );
-    send_private_message( reply_to, "!help, !quit, !splinter, !list, !destroy !join !say !raw !auth !pipe" );
+    send_private_message( reply_to, "!help, !quit, !splinter, !list, !destroy !channel !say !raw !auth !pipe" );
     send_private_message( reply_to, "For more information on a specific command, type '!help <command>'" );
+}
+
+void splinterClient::prompt_help_channel( std::string& reply_to )
+{
+    send_private_message( reply_to, "Manages channels." );
+    send_private_message( reply_to, "!channel <id> <join|part|list>" );
+    send_private_message( reply_to, "Example: !channel 1 join #channel" );
+    send_private_message( reply_to, "Example: !channel 1 part #channel" );
+    send_private_message( reply_to, "Example: !channel 1 list" );
+    send_private_message( reply_to, "Example: !channel * list" );
 }
 
 void splinterClient::prompt_help_destroy( std::string& reply_to )
@@ -12,12 +22,6 @@ void splinterClient::prompt_help_destroy( std::string& reply_to )
     send_private_message( reply_to, "Destroys a splinter descendant." );
     send_private_message( reply_to, "!destroy <id>" );
     send_private_message( reply_to, "Get IDs by using !list (see: \"!help list\")" );
-}
-
-void splinterClient::prompt_help_join( std::string& reply_to )
-{
-    send_private_message( reply_to, "Joins a channel." );
-    send_private_message( reply_to, "!join <id> <channel>" );
 }
 
 void splinterClient::prompt_help_say( std::string& reply_to )

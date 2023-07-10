@@ -131,6 +131,16 @@ void IRCEventEnvelope::postprocess_JOIN()
 {
     std::string channel = autoextract_params[0];
     set_attribute( "channel", channel );
+
+    std::string prefix = get_scalar_attribute( "_prefix" );
+    std::string nick = split(prefix, '!')[0];
+    set_attribute( "nick", nick );
+    std::string host = split(prefix, '@')[1];
+    set_attribute( "host", host );
+
+    std::string ident = split( split(prefix, '!')[1], '@')[0];
+    set_attribute( "ident", ident );
+
     set_attribute("_postprocessed", "true");
 }
 

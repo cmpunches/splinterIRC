@@ -44,6 +44,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
 
         // actions
         void join_channel( std::string channel );
+        void part_channel( std::string channel );
         void set_nick( std::string nick );
         void send_private_message( std::string nick, std::string message );
         void quit( std::string message );
@@ -105,6 +106,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         bool has_valid_session( std::string& sender );
 
         void handle_command_authentication(std::string& sender, std::string& command );
+        void handle_command_channel(std::string& sender, std::string& command );
         void handle_command_help(std::string& sender, std::string& command );
         void handle_command_quit( std::string& sender, std::string& command );
         void handle_command_splinter( std::string& sender, std::string& command );
@@ -151,7 +153,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void prompt_help_splinter(std::string& reply_to );
         void prompt_help_destroy(std::string& reply_to );
         void prompt_help_list(std::string& reply_to );
-        void prompt_help_join(std::string& reply_to );
+        void prompt_help_channel(std::string& reply_to );
         void prompt_help_say(std::string& reply_to );
         void prompt_help_raw(std::string& reply_to );
         void prompt_help_auth(std::string& reply_to );
@@ -161,7 +163,7 @@ class splinterClient : public std::enable_shared_from_this<splinterClient> {
         void handle_command( IRCEventEnvelope& event );
         void handle_command_list( std::string& sender, std::string& command );
         void handle_command_destroy( std::string& sender, std::string& command );
-        void handle_command_join( std::string& sender, std::string& command );
+        void handle_subcommand_channel( std::shared_ptr<splinterClient> client, std::string& sender, std::string& command );
         void handle_command_say( std::string& sender, std::string& command );
         void handle_command_raw( std::string& sender, std::string& command );
         void handle_command_pipe( std::string& sender, std::string& command );

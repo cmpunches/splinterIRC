@@ -76,7 +76,7 @@ void splinterClient::observation_loop()
 
             while ( std::getline( stream, event_line, '\r' ) )
             {
-                enqueue_event( IRCEventEnvelope{ event_line, server_ } );
+                enqueue_event( IRCEventEnvelope{ event_line, server_, std::to_string( splinter_id_ ) } );
             }
         }
     }
@@ -87,7 +87,7 @@ void splinterClient::orientation_loop()
     while ( !critical_thread_failed )
     {
         bool event_received = false;
-        IRCEventEnvelope event( "", "" );
+        IRCEventEnvelope event( "", "", std::to_string( splinter_id_ ) );
         {
             std::unique_lock<std::mutex> lock(orientation_mutex_);
             if (orientation_cond_.wait_for(lock, std::chrono::seconds(1), [this] { return !orientation_queue_.empty(); }))
@@ -99,7 +99,11 @@ void splinterClient::orientation_loop()
         }
         if ( event_received )
         {
-            make_decision(event);
+            // only process the event if it is for this client
+            if ( event.client_id_ == std::to_string( splinter_id_ ) )
+            {
+                make_decision(event);
+            }
         }
     }
 }

@@ -352,21 +352,35 @@ void splinterClient::handle_JOIN( IRCEventEnvelope& event )
     // if someone joins a channel and you see it, you're in that channel
     report_event(event);
     std::string channel = event.get_scalar_attribute("channel");
-    channels_add(channel);
+    if ( event.get_scalar_attribute("nick") == nick_ )
+    {
+        // we joined a channel
+        channels_add(channel);
+        notify_owner( std::to_string( splinter_id_ ) + ": added channel: " + channel );
+    }
 }
 
 void splinterClient::handle_PART( IRCEventEnvelope& event )
 {
     report_event(event);
     std::string channel = event.get_scalar_attribute("channel");
-    channels_del(channel);
+    if ( event.get_scalar_attribute("nick") == nick_ )
+    {
+        channels_del(channel);
+        notify_owner( std::to_string( splinter_id_ ) + ": removed channel: " + channel );
+    }
 }
 
 void splinterClient::handle_KICK( IRCEventEnvelope& event )
 {
     report_event(event);
-    std::string channel = event.get_scalar_attribute("channel");
-    channels_del(channel);
+    if ( event.get_scalar_attribute("target") == nick_ )
+    {
+        std::string channel = event.get_scalar_attribute("channel");
+        notify_owner( std::to_string( splinter_id_ ) + ": kicked from channel: " + channel );
+        channels_del(channel);
+        notify_owner( std::to_string( splinter_id_ ) + ": removed channel: " + channel );
+    }
 }
 
 void splinterClient::handle_NOTICE( IRCEventEnvelope& event )
@@ -398,7 +412,6 @@ void splinterClient::handle_INVITE( IRCEventEnvelope& event )
 void splinterClient::handle_ERROR( IRCEventEnvelope& event )
 {
     report_event(event);
-
 }
 
 void splinterClient::handle_RPL_WELCOME( IRCEventEnvelope& event )
